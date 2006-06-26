@@ -1,7 +1,10 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.2 2006-06-26 10:29:48 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.3 2006-06-26 12:40:56 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2006/06/26 10:29:48  sds
+ * Added GNU GPL and copyright notices.
+ *
  */
 
 /* vxi11_user.cc
@@ -30,6 +33,10 @@
 
 #include "vxi11_user.h"
 
+int	vxi11_open_device(char *ip, CLINK *clink) {
+	return vxi11_open_device(ip,&(clink->client),&(clink->link));
+	}
+
 int	vxi11_open_device(char *ip, CLIENT **client, VXI11_LINK **link) {
 
 Create_LinkParms link_parms;
@@ -55,6 +62,10 @@ Create_LinkParms link_parms;
 	return 0;
 	}
 
+int	vxi11_close_device(char *ip, CLINK *clink) {
+	return vxi11_close_device(ip, clink->client, clink->link);
+	}
+
 int	vxi11_close_device(char *ip, CLIENT *client, VXI11_LINK *link) {
 Device_Error *dev_error;
 
@@ -68,6 +79,14 @@ Device_Error *dev_error;
 	clnt_destroy(client);
 
 	return 0;
+	}
+
+int	vxi11_send(CLINK *clink, char *cmd) {
+	return vxi11_send(clink, cmd, strlen(cmd));
+	}
+
+int	vxi11_send(CLINK *clink, char *cmd, unsigned long len) {
+	return vxi11_send(clink->client, clink->link, cmd, len);
 	}
 
 /* A _lot_ of the time we are sending text strings, and can safely rely on
@@ -95,6 +114,13 @@ Device_WriteResp *write_resp;
 		return -1;
 		}
 	return 0;
+	}
+
+long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len) {
+	return vxi11_receive(clink, buffer, len, VXI11_READ_TIMEOUT);
+	}
+long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout) {
+	return vxi11_receive(clink->client, clink->link, buffer, len, timeout);
 	}
 
 /* wrapper, for default timeout */
@@ -136,14 +162,14 @@ long	curr_pos = 0;
 
 	}
 
-int	vxi11_send_data_block(CLIENT *client, VXI11_LINK *link, char *cmd, char *buffer, unsigned long len) {
+int	vxi11_send_data_block(CLINK *clink, char *cmd, char *buffer, unsigned long len) {
 char	*out_buffer;
 int	cmd_len=strlen(cmd);
 
 	out_buffer=new char[cmd_len+10+len];
 	sprintf(out_buffer,"%s#8%08lu",cmd,len);
 	memcpy(out_buffer+cmd_len+10,buffer,(unsigned long) len);
-	vxi11_send(client, link, out_buffer, (unsigned long) (cmd_len+10+len));
+	vxi11_send(clink, out_buffer, (unsigned long) (cmd_len+10+len));
 	delete[] out_buffer;
 	}
 	
@@ -158,7 +184,7 @@ int	cmd_len=strlen(cmd);
  *   |\--------- number of digits that follow (in this case 8, with leading 0's)
  *   \---------- always starts with #
  */
-long	vxi11_receive_data_block(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len, unsigned long timeout) {
+long	vxi11_receive_data_block(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout) {
 /* I'm not sure what the maximum length of this header is, I'll assume it's 
  * 11 (#9 + 9 digits) */
 unsigned long	necessary_buffer_size;
@@ -170,7 +196,7 @@ int		l;
 char		scan_cmd[20];
 	necessary_buffer_size=len+12;
 	in_buffer=new char[necessary_buffer_size];
-	ret=vxi11_receive(client, link, in_buffer, necessary_buffer_size, timeout);
+	ret=vxi11_receive(clink, in_buffer, necessary_buffer_size, timeout);
 	if (ret < 0) return ret;
 	if (in_buffer[0] != '#') {
 		printf("vxi11_user: data block error: data block does not begin with '#'\n");
@@ -191,16 +217,16 @@ char		scan_cmd[20];
 	}
 
 /* This is mainly a useful function for the overloaded vxi11_obtain_value() fn's */
-long	vxi11_send_and_receive(CLIENT *client, VXI11_LINK *link, char *cmd, char *buf, unsigned long buf_len, unsigned long timeout) {
+long	vxi11_send_and_receive(CLINK *clink, char *cmd, char *buf, unsigned long buf_len, unsigned long timeout) {
 int	ret;
 long	bytes_returned;
-	ret = vxi11_send(client, link, cmd);
+	ret = vxi11_send(clink, cmd);
 	if (ret != 0) {
 		printf("Error: vxi11_send_and_receive: could not send cmd.\n");
 		printf("       The function vxi11_send returned %d. ",ret);
 		return -1;
 		}
-	bytes_returned = vxi11_receive(client, link, buf, buf_len, timeout);
+	bytes_returned = vxi11_receive(clink, buf, buf_len, timeout);
 	if (bytes_returned <= 0) {
 		printf("Error: vxi11_send_and_receive: problem reading reply.\n");
 		printf("       The function vxi11_receive returned %ld. ",bytes_returned);
@@ -209,21 +235,21 @@ long	bytes_returned;
 	return 0;
 	}
 
-long	vxi11_obtain_long_value(CLIENT *client, VXI11_LINK *link, char *cmd, unsigned long timeout) {
+long	vxi11_obtain_long_value(CLINK *clink, char *cmd, unsigned long timeout) {
 char	buf[50]; /* 50=arbitrary length... more than enough for one number in ascii */
 	memset(buf, 0, 50);
-	if (vxi11_send_and_receive(client, link, cmd, buf, 50, timeout) != 0) {
+	if (vxi11_send_and_receive(clink, cmd, buf, 50, timeout) != 0) {
 		printf("Returning 0\n");
 		return 0;
 		}
 	return strtol(buf, (char **)NULL, 10);
 	}
 
-double	vxi11_obtain_double_value(CLIENT *client, VXI11_LINK *link, char *cmd, unsigned long timeout) {
+double	vxi11_obtain_double_value(CLINK *clink, char *cmd, unsigned long timeout) {
 char	buf[50]; /* 50=arbitrary length... more than enough for one number in ascii */
 double	val;
 	memset(buf, 0, 50);
-	if (vxi11_send_and_receive(client, link, cmd, buf, 50, timeout) != 0) {
+	if (vxi11_send_and_receive(clink, cmd, buf, 50, timeout) != 0) {
 		printf("Returning 0.0\n");
 		return 0.0;
 		}
@@ -232,12 +258,12 @@ double	val;
 	return val;
 	}
 
-long	vxi11_obtain_long_value(CLIENT *client, VXI11_LINK *link, char *cmd) {
-	return vxi11_obtain_long_value(client, link, cmd, VXI11_READ_TIMEOUT);
+long	vxi11_obtain_long_value(CLINK *clink, char *cmd) {
+	return vxi11_obtain_long_value(clink, cmd, VXI11_READ_TIMEOUT);
 	}
 
-double	vxi11_obtain_double_value(CLIENT *client, VXI11_LINK *link, char *cmd) {
-	return vxi11_obtain_double_value(client, link, cmd, VXI11_READ_TIMEOUT);
+double	vxi11_obtain_double_value(CLINK *clink, char *cmd) {
+	return vxi11_obtain_double_value(clink, cmd, VXI11_READ_TIMEOUT);
 	}
 
 
