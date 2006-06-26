@@ -1,7 +1,10 @@
 /* Revision history: */
-/* $Id: vxi11_cmd.c,v 1.1 2006-06-26 10:23:52 sds Exp $ */
+/* $Id: vxi11_cmd.c,v 1.2 2006-06-26 12:43:11 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2006/06/26 10:23:52  sds
+ * Initial revision
+ *
  */
 
 /* vxi11_cmd.c
@@ -33,13 +36,14 @@
 
 int	main(int argc, char *argv[]) {
 
-VXI11_CLIENT	*client;
-VXI11_LINK	*link;
 static char	*device_ip;
 char		cmd[256];
 char		buf[BUF_LEN];
 int		ret;
 long		bytes_returned;
+CLINK		*clink;
+
+	clink = new CLINK;
 
 	if (argc != 2) {
 		printf("usage: %s www.xxx.yyy.zzz (enter your device's IP)\n",argv[0]);
@@ -48,7 +52,7 @@ long		bytes_returned;
 
 	device_ip = argv[1];
 
-	ret=vxi11_open_device(device_ip,&client,&link);
+	ret=vxi11_open_device(device_ip,clink);
 
 	if (ret != 0) {
 		printf("Error: could not open device %s, quitting\n",device_ip);
@@ -60,21 +64,22 @@ long		bytes_returned;
 		memset(buf, 0, BUF_LEN);	// initialize buffer
 		printf("Input command or query ('q' to exit): ");
 		fgets(cmd,256,stdin);
-		if (strncasecmp(cmd, "q",1) == 0) break;
 		cmd[strlen(cmd)-1] = 0;		// just gets rid of the \n
-		if (vxi11_send(client, link, cmd) < 0) break;
-		if ( strstr(cmd, "?") != 0 ) {
-			bytes_returned=vxi11_receive(client, link, buf, BUF_LEN);
-			if(bytes_returned > 0) {
+		if (strncasecmp(cmd, "q",1) == 0) break;
+
+		if (vxi11_send(clink, cmd) < 0) break;
+		if (strstr(cmd, "?") != 0) {
+			bytes_returned = vxi11_receive(clink, buf, BUF_LEN);
+			if (bytes_returned > 0) {
 				printf("%s\n",buf);
 				}
-			else if(bytes_returned == -15) {
+			else if (bytes_returned == -15) {
 				printf("*** [ NOTHING RECEIVED ] ***\n");
 				}
 			else	break;
 			}
 		}
 
-	ret=vxi11_close_device(device_ip,client,link);
+	ret=vxi11_close_device(device_ip,clink);
 	return 0;
 	}
