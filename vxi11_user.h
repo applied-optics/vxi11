@@ -1,7 +1,13 @@
 /* Revision history: */
-/* $Id: vxi11_user.h,v 1.2 2006-06-26 12:42:54 sds Exp $ */
+/* $Id: vxi11_user.h,v 1.3 2006-07-06 13:03:28 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2006/06/26 12:42:54  sds
+ * Introduced a new CLINK structure, to reduce the number of arguments
+ * passed to functions. Wrote wrappers for open(), close(), send()
+ * and receieve() functions, then adjusted all the other functions built
+ * on those to make use of the CLINK structure.
+ *
  * Revision 1.1  2006/06/26 10:36:02  sds
  * Initial revision
  *
@@ -31,6 +37,8 @@
  * The author's email address is steve.sharples@nottingham.ac.uk
  */
 
+#ifndef	__VXI11_USER__
+#define	__VXI11_USER__
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -45,17 +53,20 @@ using namespace std;
 #define	VXI11_READ_TIMEOUT	2000	/* in ms */
 #define	VXI11_CLIENT		CLIENT
 #define	VXI11_LINK		Create_LinkResp
+#define	VXI11_MAX_CLIENTS	256	/* maximum no of unique IP addresses/clients */
 
 struct	CLINK {
 	VXI11_CLIENT	*client;
 	VXI11_LINK	*link;
 	} ;
 typedef	struct	CLINK CLINK;
+
 /* The four main functions: open, close, send, receieve (plus a couple of wrappers) */
 /* In fact all 6 of these are wrappers to the original functions listed at the
  * bottom, that use separate CLIENT and VXI11_LINK structures. It was easier to 
  * write wrappers for these functions than to re-write the original functions
- * themselves. */
+ * themselves. These are the 4 (or 6 if you like) key user functions that you
+ * should probably be using. They all use the CLINK structure. */
 int     vxi11_open_device(char *ip, CLINK *clink);
 int	vxi11_close_device(char *ip, CLINK *clink);
 int	vxi11_send(CLINK *clink, char *cmd);
@@ -63,7 +74,7 @@ int	vxi11_send(CLINK *clink, char *cmd, unsigned long len);
 long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len);
 long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout);
 
-/* Utility functions, that use send() and receive() */
+/* Utility functions, that use send() and receive(). Use these too. */
 int	vxi11_send_data_block(CLINK *clink, char *cmd, char *buffer, unsigned long len);
 long	vxi11_receive_data_block(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout);
 long	vxi11_send_and_receive(CLINK *clink, char *cmd, char *buf, unsigned long buf_len, unsigned long timeout);
@@ -74,11 +85,16 @@ double	vxi11_obtain_double_value(CLINK *link, char *cmd);
 
 /* When I first wrote this library I used separate client and links. I've
  * retained the original functions and just written clink wrappers for them
- * (see above) as it's perhaps a little clearer this way. */
+ * (see above) as it's perhaps a little clearer this way. Probably not worth
+ * delving this deep in use, but it's where the real nitty gritty is. */
 int	vxi11_open_device(char *ip, CLIENT **client, VXI11_LINK **link);
+int	vxi11_open_link(char *ip, CLIENT **client, VXI11_LINK **link);
+int	vxi11_open_link(CLIENT **client, VXI11_LINK **link);
 int	vxi11_close_device(char *ip, CLIENT *client, VXI11_LINK *link);
+int	vxi11_close_link(char *ip, CLIENT *client, VXI11_LINK *link);
 int	vxi11_send(CLIENT *client, VXI11_LINK *link, char *cmd);
 int	vxi11_send(CLIENT *client, VXI11_LINK *link, char *cmd, unsigned long len);
 long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len);
 long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len, unsigned long timeout);
 
+#endif
