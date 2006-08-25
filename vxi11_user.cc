@@ -1,7 +1,12 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.5 2006-08-25 13:06:44 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.6 2006-08-25 13:45:12 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2006/08/25 13:06:44  sds
+ * tidied up some of the return values, and made sure that if a
+ * sub-function returned an error value, this would also be
+ * returned by the calling function.
+ *
  * Revision 1.4  2006/07/06 13:04:59  sds
  * Lots of changes this revision.
  * Found I was having problems talking to multiple links on the same
@@ -500,6 +505,7 @@ int	vxi11_send(CLIENT *client, VXI11_LINK *link, char *cmd) {
 int	vxi11_send(CLIENT *client, VXI11_LINK *link, char *cmd, unsigned long len) {
 Device_WriteParms write_parms;
 Device_WriteResp *write_resp;
+int	bytes_left = (int)len;
 
 /* Do we really need to create a link each time? We do if there are multiple
  * clients. For some reason, each time you create a link, it's always got the
@@ -514,18 +520,27 @@ Device_WriteResp *write_resp;
 	write_parms.lid			= link->lid;
 	write_parms.io_timeout		= VXI11_DEFAULT_TIMEOUT;
 	write_parms.lock_timeout	= VXI11_DEFAULT_TIMEOUT;
-	write_parms.flags		= 8;
-	write_parms.data.data_len	= len;
-	write_parms.data.data_val	= cmd;
 
-	write_resp = device_write_1(&write_parms, client);
+/* We can only write (link->maxRecvSize) bytes at a time, so we sit in a loop,
+ * writing a chunk at a time, until we're done. */
+	do {
+		if (bytes_left <= link->maxRecvSize) {
+			write_parms.flags		= 8;
+			write_parms.data.data_len	= bytes_left;
+			}
+		else {
+			write_parms.flags		= 0;
+			write_parms.data.data_len	= link->maxRecvSize;
+			}
+		write_parms.data.data_val	= cmd + (len - bytes_left);
+		write_resp = device_write_1(&write_parms, client);
 
-	//printf("maxRecvSize = %lu\n",link->maxRecvSize);
-	//printf("no of bytes written apparently: %lu\n",write_resp->size);
-	if (write_resp->error != 0) {
-		printf("vxi11_user: write error: %d\n",write_resp->error);
-		return -(write_resp->error);
-		}
+		if (write_resp->error != 0) {
+			printf("vxi11_user: write error: %d\n",write_resp->error);
+			return -(write_resp->error);
+			}
+		bytes_left -= write_resp->size;
+		} while (bytes_left > 0);
 
 	return 0;
 	}
