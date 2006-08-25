@@ -1,7 +1,30 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.4 2006-07-06 13:04:59 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.5 2006-08-25 13:06:44 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2006/07/06 13:04:59  sds
+ * Lots of changes this revision.
+ * Found I was having problems talking to multiple links on the same
+ * client, if I created a different client for each one. So introduced
+ * a few global variables to keep track of all the ip addresses of
+ * clients that the library is asked to create, and only creating new
+ * clients if the ip address is different. This puts a limit of how
+ * many unique ip addresses (clients) a single process can connect to.
+ * Set this value at 256 (should hopefully be enough!).
+ * Next I found that talking to different clients on different ip
+ * addresses didn't work. It turns out that create_link_1() creates
+ * a static structure. This this link is associated with a given
+ * client (and hence a given IP address), then the only way I could
+ * think of making things work was to add a call to an
+ * vxi11_open_link() function before each send command (no idea what
+ * this adds to overheads and it's very messy!) - at least I was
+ * able to get this to only happen when we are using more than one
+ * client/ip address.
+ * Also, while I was at it, I re-ordered the functions a little -
+ * starts with core user functions, extra user functions, then core
+ * library functions at the end. Added a few more comments. Tidied
+ * up. Left some debugging info in, but commented out.
+ *
  * Revision 1.3  2006/06/26 12:40:56  sds
  * Introduced a new CLINK structure, to reduce the number of arguments
  * passed to functions. Wrote wrappers for open(), close(), send()
@@ -251,12 +274,14 @@ long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long 
 int	vxi11_send_data_block(CLINK *clink, char *cmd, char *buffer, unsigned long len) {
 char	*out_buffer;
 int	cmd_len=strlen(cmd);
+int	ret;
 
 	out_buffer=new char[cmd_len+10+len];
 	sprintf(out_buffer,"%s#8%08lu",cmd,len);
 	memcpy(out_buffer+cmd_len+10,buffer,(unsigned long) len);
-	vxi11_send(clink, out_buffer, (unsigned long) (cmd_len+10+len));
+	ret = vxi11_send(clink, out_buffer, (unsigned long) (cmd_len+10+len));
 	delete[] out_buffer;
+	return ret;
 	}
 	
 
@@ -495,9 +520,11 @@ Device_WriteResp *write_resp;
 
 	write_resp = device_write_1(&write_parms, client);
 
+	//printf("maxRecvSize = %lu\n",link->maxRecvSize);
+	//printf("no of bytes written apparently: %lu\n",write_resp->size);
 	if (write_resp->error != 0) {
 		printf("vxi11_user: write error: %d\n",write_resp->error);
-		return -1;
+		return -(write_resp->error);
 		}
 
 	return 0;
