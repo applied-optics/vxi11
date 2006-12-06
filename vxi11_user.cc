@@ -1,7 +1,14 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.6 2006-08-25 13:45:12 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.7 2006-12-06 16:27:47 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2006/08/25 13:45:12  sds
+ * Major improvements to the vxi11_send function. Now takes
+ * link->maxRecvSize into account, and writes a chunk at a time
+ * until the entire message is sent. Important for sending large
+ * data sets, because the data you want to send may be larger than
+ * the instrument's "input buffer."
+ *
  * Revision 1.5  2006/08/25 13:06:44  sds
  * tidied up some of the return values, and made sure that if a
  * sub-function returned an error value, this would also be
@@ -583,7 +590,7 @@ int	l;
 			return -100;
 			}
 		reason=read_resp->reason;
-		free(read_resp->data.data_val);
+		/* free(read_resp->data.data_val); */
 		} while (reason < 4);
 	return (curr_pos + read_resp->data.data_len); /*actual number of bytes received*/
 
