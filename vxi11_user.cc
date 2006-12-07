@@ -1,7 +1,11 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.7 2006-12-06 16:27:47 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.8 2006-12-07 12:22:20 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2006/12/06 16:27:47  sds
+ * removed call to ANSI free() fn in vxi11_receive, which according to
+ * Manfred Scheible "is not necessary and wrong (crashes)".
+ *
  * Revision 1.6  2006/08/25 13:45:12  sds
  * Major improvements to the vxi11_send function. Now takes
  * link->maxRecvSize into account, and writes a chunk at a time
@@ -356,18 +360,23 @@ char		scan_cmd[20];
 long	vxi11_send_and_receive(CLINK *clink, char *cmd, char *buf, unsigned long buf_len, unsigned long timeout) {
 int	ret;
 long	bytes_returned;
-	ret = vxi11_send(clink, cmd);
-	if (ret != 0) {
-		printf("Error: vxi11_send_and_receive: could not send cmd.\n");
-		printf("       The function vxi11_send returned %d. ",ret);
-		return -1;
-		}
-	bytes_returned = vxi11_receive(clink, buf, buf_len, timeout);
-	if (bytes_returned <= 0) {
-		printf("Error: vxi11_send_and_receive: problem reading reply.\n");
-		printf("       The function vxi11_receive returned %ld. ",bytes_returned);
-		return -2;
-		}
+	do {
+		ret = vxi11_send(clink, cmd);
+		if (ret != 0) {
+			printf("Error: vxi11_send_and_receive: could not send cmd.\n");
+			printf("       The function vxi11_send returned %d. ",ret);
+			return -1;
+			}
+		bytes_returned = vxi11_receive(clink, buf, buf_len, timeout);
+		if (bytes_returned <= 0) {
+			if (bytes_returned >-VXI11_NULL_READ_RESP) {
+				printf("Error: vxi11_send_and_receive: problem reading reply.\n");
+				printf("       The function vxi11_receive returned %ld. ",bytes_returned);
+				return -2;
+				}
+			else printf("(Info: VXI11_NULL_READ_RESP in vxi11_send_and_receive, resending query)\n");
+			}
+		} while (bytes_returned == -VXI11_NULL_READ_RESP);
 	return 0;
 	}
 
@@ -566,7 +575,6 @@ Device_ReadParms read_parms;
 Device_ReadResp *read_resp;
 long	reason;
 long	curr_pos = 0;
-int	l;
 
 	read_parms.lid			= link->lid;
 	read_parms.requestSize		= len;
@@ -577,6 +585,11 @@ int	l;
 
 	do {
 		read_resp = device_read_1(&read_parms, client);
+		if(read_resp==NULL){
+			return -VXI11_NULL_READ_RESP; /* there is nothing to read. Usually occurs after sending a query
+							 which times out on the instrument. If we don't check this first,
+							 then the following line causes a seg fault */
+			}
 		if (read_resp->error != 0) {
 			printf("vxi11_user: read error: %d\n",read_resp->error);
 			return -(read_resp->error);
@@ -590,7 +603,7 @@ int	l;
 			return -100;
 			}
 		reason=read_resp->reason;
-		/* free(read_resp->data.data_val); */
+		/* free(read_resp->data.data_val); */ /* Apparently this is not needed and can cause crashes (Manfred Scheible, 26/10/06) */
 		} while (reason < 4);
 	return (curr_pos + read_resp->data.data_len); /*actual number of bytes received*/
 
