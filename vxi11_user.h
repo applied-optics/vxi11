@@ -1,7 +1,12 @@
 /* Revision history: */
-/* $Id: vxi11_user.h,v 1.3 2006-07-06 13:03:28 sds Exp $ */
+/* $Id: vxi11_user.h,v 1.4 2006-12-07 12:26:17 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2006/07/06 13:03:28  sds
+ * Surrounded the whole header with #ifndef __VXI11_USER__.
+ * Added a couple of vxi11_open_link() fns and a vxi11_close_link() fn, to
+ * separate the link stuff from the client stuff.
+ *
  * Revision 1.2  2006/06/26 12:42:54  sds
  * Introduced a new CLINK structure, to reduce the number of arguments
  * passed to functions. Wrote wrappers for open(), close(), send()
@@ -54,6 +59,9 @@ using namespace std;
 #define	VXI11_CLIENT		CLIENT
 #define	VXI11_LINK		Create_LinkResp
 #define	VXI11_MAX_CLIENTS	256	/* maximum no of unique IP addresses/clients */
+#define	VXI11_NULL_READ_RESP	50	/* vxi11_receive() return value if a query
+					 * times out ON THE INSTRUMENT (and so we have
+					 * to resend the query again) */
 
 struct	CLINK {
 	VXI11_CLIENT	*client;
