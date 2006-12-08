@@ -1,7 +1,20 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.8 2006-12-07 12:22:20 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.9 2006-12-08 12:06:58 ijc Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  2006/12/07 12:22:20  sds
+ * Couple of changes, related.
+ * (1) added extra check in vxi11_receive() to see if read_resp==NULL.
+ * read_resp can apparently be NULL if (eg) you send an instrument a
+ * query, but the instrument is so busy with something else for so long
+ * that it forgets the original query. So this extra check is for that
+ * situation, and vxi11_receive returns -VXI11_NULL_READ_RESP to the
+ * calling function.
+ * (2) vxi11_send_and_receive() is now aware of the possibility of
+ * being returned -VXI11_NULL_READ_RESP. If so, it re-sends the query,
+ * until either getting a "regular" read error (read_resp->error!=0) or
+ * a successful read.
+ *
  * Revision 1.7  2006/12/06 16:27:47  sds
  * removed call to ANSI free() fn in vxi11_receive, which according to
  * Manfred Scheible "is not necessary and wrong (crashes)".
@@ -363,10 +376,14 @@ long	bytes_returned;
 	do {
 		ret = vxi11_send(clink, cmd);
 		if (ret != 0) {
-			printf("Error: vxi11_send_and_receive: could not send cmd.\n");
-			printf("       The function vxi11_send returned %d. ",ret);
-			return -1;
+			if (ret != -VXI11_NULL_WRITE_RESP) {
+				printf("Error: vxi11_send_and_receive: could not send cmd.\n");
+				printf("       The function vxi11_send returned %d. ",ret);
+				return -1;
+				}
+			else printf("(Info: VXI11_NULL_WRITE_RESP in vxi11_send_and_receive, resending query)\n");
 			}
+
 		bytes_returned = vxi11_receive(clink, buf, buf_len, timeout);
 		if (bytes_returned <= 0) {
 			if (bytes_returned >-VXI11_NULL_READ_RESP) {
@@ -376,7 +393,7 @@ long	bytes_returned;
 				}
 			else printf("(Info: VXI11_NULL_READ_RESP in vxi11_send_and_receive, resending query)\n");
 			}
-		} while (bytes_returned == -VXI11_NULL_READ_RESP);
+		} while (bytes_returned == -VXI11_NULL_READ_RESP || ret == -VXI11_NULL_WRITE_RESP);
 	return 0;
 	}
 
@@ -551,6 +568,13 @@ int	bytes_left = (int)len;
 		write_parms.data.data_val	= cmd + (len - bytes_left);
 		write_resp = device_write_1(&write_parms, client);
 
+		if(write_resp==NULL){
+			return -VXI11_NULL_WRITE_RESP; /* The instrument did not acknowledge the write, just completely
+							  dropped it. There was no vxi11 comms error as such, the 
+							  instrument is just being rude. Usually occurs when the instrument
+							  is busy. If we don't check this first, then the following 
+							  line causes a seg fault */
+			}
 		if (write_resp->error != 0) {
 			printf("vxi11_user: write error: %d\n",write_resp->error);
 			return -(write_resp->error);
