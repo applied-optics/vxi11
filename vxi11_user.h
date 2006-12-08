@@ -1,7 +1,10 @@
 /* Revision history: */
-/* $Id: vxi11_user.h,v 1.5 2006-12-08 11:45:29 ijc Exp $ */
+/* $Id: vxi11_user.h,v 1.6 2006-12-08 11:47:14 ijc Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2006/12/08 11:45:29  ijc
+ * added #define VXI11_NULL_READ_RESP
+ *
  * Revision 1.4  2006/12/07 12:26:17  sds
  * added VXI11_NULL_READ_RESP #define
  *
@@ -65,7 +68,7 @@ using namespace std;
 #define	VXI11_NULL_READ_RESP	50	/* vxi11_receive() return value if a query
 					 * times out ON THE INSTRUMENT (and so we have
 					 * to resend the query again) */
-#define	VXI11_NULL_READ_RESP	51	/* vxi11_send() return value if a sent command
+#define	VXI11_NULL_WRITE_RESP	51	/* vxi11_send() return value if a sent command
 					 * times out ON THE INSTURMENT. */
 
 struct	CLINK {
