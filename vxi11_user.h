@@ -1,7 +1,10 @@
 /* Revision history: */
-/* $Id: vxi11_user.h,v 1.4 2006-12-07 12:26:17 sds Exp $ */
+/* $Id: vxi11_user.h,v 1.5 2006-12-08 11:45:29 ijc Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2006/12/07 12:26:17  sds
+ * added VXI11_NULL_READ_RESP #define
+ *
  * Revision 1.3  2006/07/06 13:03:28  sds
  * Surrounded the whole header with #ifndef __VXI11_USER__.
  * Added a couple of vxi11_open_link() fns and a vxi11_close_link() fn, to
@@ -62,6 +65,8 @@ using namespace std;
 #define	VXI11_NULL_READ_RESP	50	/* vxi11_receive() return value if a query
 					 * times out ON THE INSTRUMENT (and so we have
 					 * to resend the query again) */
+#define	VXI11_NULL_READ_RESP	51	/* vxi11_send() return value if a sent command
+					 * times out ON THE INSTURMENT. */
 
 struct	CLINK {
 	VXI11_CLIENT	*client;
