@@ -1,4 +1,33 @@
 ------------------------------------------------------------------------------
+Thanks once again to Robert Larice for the patch and the explanation!
+
+------------------------------------------------------------------------------
+vxi11_1.03 - 29/01/2007
+
+Some bug-fixes (thanks to Manfred Scheible), and extra awareness of the
+possibility that instruments could time out after receiving a query WITHOUT
+causing an error condition. In some cases (prior to these changes) this
+could have resulted in a segmentation fault.
+
+Specifically:
+
+(1) removed call to ANSI free() fn in vxi11_receive, which according to
+    Manfred Scheible "is not necessary and wrong (crashes)".
+
+(2) added extra check in vxi11_receive() to see if read_resp==NULL.
+    read_resp can apparently be NULL if (eg) you send an instrument a
+    query, but the instrument is so busy with something else for so long
+    that it forgets the original query. So this extra check is for that
+    situation, and vxi11_receive returns -VXI11_NULL_READ_RESP to the
+    calling function.
+
+(3) vxi11_send_and_receive() is now aware of the possibility of being
+    returned -VXI11_NULL_READ_RESP. If so, it re-sends the query, until
+    either getting a "regular" read error (read_resp->error!=0) or a
+    successful read.
+
+(4) Similar to (2)... added extra check in vxi11_send() to see if
+    write_resp==NULL. If so, return -VXI11_NULL_WRITE_RESP. As with (3),
     send_and_receive() is now aware of this possibility.
 
 ------------------------------------------------------------------------------
