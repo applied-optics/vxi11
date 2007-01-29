@@ -1,4 +1,23 @@
 ------------------------------------------------------------------------------
+    send_and_receive() is now aware of this possibility.
+
+------------------------------------------------------------------------------
+vxi11_1.02 - 25/08/2006
+
+Important changes to the core vxi11_send() function, which should be
+invisible to the user.
+
+For those interested, the function now takes note of the value of
+link->maxRecvSize, which is the maximum number of bytes that the vxi11
+intrument you're talking to can receive in one go. For many instruments
+this may be a few kB, which isn't a problem for sending short commands;
+however, sending large chunks of data (for example sending waveforms
+to instruments) may exceed this maxRecvSize. The core vxi11_send() function
+has been re-written to ensure that only a maximum of [maxRecvSize] bytes are
+written in one go... the function sits in a loop until all the message/
+data is written.
+
+Also tidied up some of the return values (specifically with regard to
 vxi11_send() and vxi11_send_data_block() ).
 
 ------------------------------------------------------------------------------
