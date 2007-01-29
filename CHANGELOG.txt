@@ -1,4 +1,32 @@
 ------------------------------------------------------------------------------
+vxi11_send() and vxi11_send_data_block() ).
+
+------------------------------------------------------------------------------
+vxi11_1.01 - 06/07/2006
+
+Fair few changes since v1.00, all in vxi11_user.c and vxi11_user.h
+
+Found I was having problems talking to multiple links on the same
+client, if I created a different client for each one. So introduced
+a few global variables to keep track of all the ip addresses of
+clients that the library is asked to create, and only creating new
+clients if the ip address is different. This puts a limit of how
+many unique ip addresses (clients) a single process can connect to.
+Set this value at 256 (should hopefully be enough!).
+
+Next I found that talking to different clients on different ip
+addresses didn't work. It turns out that create_link_1() creates
+a static structure. This this link is associated with a given
+client (and hence a given IP address), then the only way I could
+think of making things work was to add a call to an
+vxi11_open_link() function before each send command (no idea what
+this adds to overheads and it's very messy!) - at least I was
+able to get this to only happen when we are using more than one
+client/ip address.
+
+Also, while I was at it, I re-ordered the functions a little -
+starts with core user functions, extra user functions, then core
+library functions at the end. Added a few more comments. Tidied
 up. Left some debugging info in, but commented out.
 
 ------------------------------------------------------------------------------
