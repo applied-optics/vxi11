@@ -1,7 +1,47 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.10 2007-07-10 11:12:12 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.11 2007-07-10 13:49:18 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.10  2007/07/10 11:12:12  sds
+ * Patches provided by Robert Larice. This basically solves the problem
+ * of having to recreate a link each time you change client. In the words
+ * of Robert:
+ *
+ * ---------
+ * In the source code there were some strange comments, suggesting
+ * you had trouble to get more than one link working.
+ *
+ * I think thats caused by some misuse of the rpcgen generated subroutines.
+ * 1) those rpcgen generated *_1 functions returned pointers to
+ *      statically allocated temporary structs.
+ *    those where meant to be instantly copied to the user's space,
+ *    which wasn't done, thus instead of
+ *        Device_ReadResp  *read_resp;
+ *        read_resp = device_read_1(...)
+ *    one should have written someting like:
+ *        Device_ReadResp  *read_resp;
+ *        read_resp = malloc(...)
+ *        memcpy(read_resp, device_read_1(...), ...)
+ * 2) but a better fix is to use the rpcgen -M Flag
+ *   which allows to pass the memory space as a third argument
+ * so one can write
+ *       Device_ReadResp  *read_resp;
+ *        read_resp = malloc(...)
+ *        device_read_1(..., read_resp, ...)
+ *      furthermore this is now automatically thread save
+ * 3) the rpcgen function device_read_1
+ * expects a target buffer to be passed via read_resp
+ * which was not done.
+ * 4) the return value of vxi11_receive() was computed incorrectly
+ * 5) minor,  Makefile typo's
+ * ---------
+ * So big thanks to Robert Larice for the patch! I've tested it
+ * (briefly) on more than one scope, and with multiple links per
+ * client, and it seems to work fine. I've thus removed all references
+ * to VXI11_ENABLE_MULTIPLE_CLIENTS, and deleted the vxi11_open_link()
+ * function that WASN'T passed an ip address (that was only called
+ * from the vxi11_send() fn, when there was more than one client).
+ *
  * Revision 1.9  2006/12/08 12:06:58  ijc
  * Basically the same changes as revision 1.8, except replace all
  * references to "vxi11_receive" with "vxi11_send" and all references
@@ -162,15 +202,15 @@ int	VXI11_LINK_COUNT[VXI11_MAX_CLIENTS];
  * KEY USER FUNCTIONS - USE THESE FROM YOUR PROGRAMS OR INSTRUMENT LIBRARIES *
  *****************************************************************************/
 
-/* OPEN FUNCTION *
- * ============= */
+/* OPEN FUNCTIONS *
+ * ============== */
 
 /* Use this function from user land to open a device and create a link. Can be
  * used multiple times for the same device (the library will keep track).*/
-int     vxi11_open_device(char *ip, CLINK *clink) {
-int     ret;
-int     l;
-int     device_no=-1;
+int	vxi11_open_device(char *ip, CLINK *clink, char *device) {
+int	ret;
+int	l;
+int	device_no=-1;
 
 //	printf("before doing anything, clink->link = %ld\n", clink->link);
 	/* Have a look to see if we've already initialised an instrument with
@@ -195,7 +235,7 @@ int     device_no=-1;
 		 * must be link number 1. Keep track of how many devices we've
 		 * opened so we don't run out of storage space. */
 		else {
-			ret = vxi11_open_device(ip, &(clink->client), &(clink->link));
+			ret = vxi11_open_device(ip, &(clink->client), &(clink->link), device);
 			strncpy(VXI11_IP_ADDRESS[VXI11_DEVICE_NO],ip,20);
 			VXI11_CLIENT_ADDRESS[VXI11_DEVICE_NO] = clink->client;
 			VXI11_LINK_COUNT[VXI11_DEVICE_NO]=1;
@@ -212,13 +252,24 @@ int     device_no=-1;
 		/* Copy the client pointer address. Just establish a new link
 		 * (not a new client). Add one to the link count */
 		clink->client = VXI11_CLIENT_ADDRESS[device_no];
-		ret = vxi11_open_link(ip, &(clink->client), &(clink->link));
+		ret = vxi11_open_link(ip, &(clink->client), &(clink->link), device);
 //		printf("Found an ip address, copying client from VXI11_CLIENT_ADDRESS[%d]\n",device_no);
 		VXI11_LINK_COUNT[device_no]++;
 //		printf("Have just incremented VXI11_LINK_COUNT[%d], it's now %d\n",device_no,VXI11_LINK_COUNT[device_no]);
 		}
 //	printf("after creating link, clink->link = %ld\n", clink->link);
 	return ret;
+	}
+
+/* This is a wrapper function, used for the situations where there is only one
+ * "device" per client. This is the case for most (if not all) VXI11
+ * instruments; however, it is _not_ the case for devices such as LAN to GPIB
+ * gateways. These are single clients that communicate to many instruments
+ * (devices). In order to differentiate between then, we need to pass a device
+ * name. This gets used in the vxi11_open_link() fn, as the link_parms.device
+ * value. */
+int	vxi11_open_device(char *ip, CLINK *clink) {
+	return vxi11_open_device(ip, clink, "inst0");
 	}
 
 
@@ -439,7 +490,7 @@ double	vxi11_obtain_double_value(CLINK *clink, char *cmd) {
 
 /* OPEN FUNCTIONS *
  * ============== */
-int	vxi11_open_device(char *ip, CLIENT **client, VXI11_LINK **link) {
+int	vxi11_open_device(char *ip, CLIENT **client, VXI11_LINK **link, char *device) {
 
 	*client = clnt_create(ip, DEVICE_CORE, DEVICE_CORE_VERSION, "tcp");
 
@@ -448,10 +499,10 @@ int	vxi11_open_device(char *ip, CLIENT **client, VXI11_LINK **link) {
 		return -1;
 		}
 
-	return vxi11_open_link(ip, client, link);
+	return vxi11_open_link(ip, client, link, device);
 	}
 
-int	vxi11_open_link(char *ip, CLIENT **client, VXI11_LINK **link) {
+int	vxi11_open_link(char *ip, CLIENT **client, VXI11_LINK **link, char *device) {
 
 Create_LinkParms link_parms;
 
@@ -459,7 +510,7 @@ Create_LinkParms link_parms;
 	link_parms.clientId	= (long) *client;
 	link_parms.lockDevice	= 0;
 	link_parms.lock_timeout	= VXI11_DEFAULT_TIMEOUT;
-	link_parms.device	= "inst0";
+	link_parms.device	= device;
 
         *link = (Create_LinkResp *) calloc(1, sizeof(Create_LinkResp));
 
