@@ -1,7 +1,12 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.9 2006-12-08 12:06:58 ijc Exp $ */
+/* $Id: vxi11_user.cc,v 1.10 2007-07-10 11:12:12 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.9  2006/12/08 12:06:58  ijc
+ * Basically the same changes as revision 1.8, except replace all
+ * references to "vxi11_receive" with "vxi11_send" and all references
+ * to "-VXI11_NULL_READ_RESP" with "-VXI11_NULL_WRITE_RESP".
+ *
  * Revision 1.8  2006/12/07 12:22:20  sds
  * Couple of changes, related.
  * (1) added extra check in vxi11_receive() to see if read_resp==NULL.
@@ -147,16 +152,11 @@
  *   entity from user land, we don't want to worry about different
  *   initialisation procedures, depending on whether it's an instrument
  *   with the same IP address or not
- * - if you create a client and a link, then create another client and
- *   another link to the same IP address, then the first link is severed. So
- *   basically, from any given process, there can only be one client per IP
- *   address. This does not seem to apply for multiple processes.
  */
 char	VXI11_IP_ADDRESS[VXI11_MAX_CLIENTS][20];
 CLIENT	*VXI11_CLIENT_ADDRESS[VXI11_MAX_CLIENTS];
 int	VXI11_DEVICE_NO = 0;
 int	VXI11_LINK_COUNT[VXI11_MAX_CLIENTS];
-int	VXI11_ENABLE_MULTIPLE_CLIENTS = 0;
 
 /*****************************************************************************
  * KEY USER FUNCTIONS - USE THESE FROM YOUR PROGRAMS OR INSTRUMENT LIBRARIES *
@@ -204,10 +204,6 @@ int     device_no=-1;
 //			printf("VXI11_CLIENT_ADDRESS[%d]=%ld,\n",VXI11_DEVICE_NO,VXI11_CLIENT_ADDRESS[VXI11_DEVICE_NO]);
 //			printf("          clink->client=%ld,\n",clink->client);
 //			printf("VXI11_LINK_COUNT[%d]=%d.\n",VXI11_DEVICE_NO,VXI11_LINK_COUNT[VXI11_DEVICE_NO]);
-			if (VXI11_DEVICE_NO == 1) { // ie this is our 2nd IP address
-				VXI11_ENABLE_MULTIPLE_CLIENTS = 1;
-//				printf("Multiple clients detected, enabling multiple client mode.\n");
-				}
 			VXI11_DEVICE_NO++;
 			}
 		}
@@ -465,33 +461,10 @@ Create_LinkParms link_parms;
 	link_parms.lock_timeout	= VXI11_DEFAULT_TIMEOUT;
 	link_parms.device	= "inst0";
 
-	*link = create_link_1(&link_parms, *client);
-	if (*link == NULL) {
+        *link = (Create_LinkResp *) calloc(1, sizeof(Create_LinkResp));
+
+	if (create_link_1(&link_parms, *link, *client) != RPC_SUCCESS) {
 		clnt_perror(*client, ip);
-		return -2;
-		}
-	return 0;
-	}
-/* This open_link function is not passed the ip address (and so cannot report
- * errors very accurately). It is only used from the vxi11_send() fn, and then
- * only if VXI11_ENABLE_MULTIPLE_CLIENTS == 1. This is because, if you're
- * talking to multiple clients (ie multiple machines on different IP addresses)
- * then you must establish a new link each time you swap from one client
- * to another. There only seems to be one link (ie it is a static pointer).
- * Frustrating. */
-int	vxi11_open_link(CLIENT **client, VXI11_LINK **link) {
-
-Create_LinkParms link_parms;
-
-	/* Set link parameters */
-	link_parms.clientId	= (long) *client;
-	link_parms.lockDevice	= 0;
-	link_parms.lock_timeout	= VXI11_DEFAULT_TIMEOUT;
-	link_parms.device	= "inst0";
-
-	*link = create_link_1(&link_parms, *client);
-	if (*link == NULL) {
-		printf("Error in creating link (no ip) fn, returning -2\n");
 		return -2;
 		}
 	return 0;
@@ -511,11 +484,10 @@ int	ret;
 	}
 
 int	vxi11_close_link(char *ip, CLIENT *client, VXI11_LINK *link) {
-Device_Error *dev_error;
+Device_Error dev_error;
+        memset(&dev_error, 0, sizeof(dev_error)); 
 
-	dev_error = destroy_link_1(&link->lid, client);
-
-	if (dev_error == NULL) {
+	if (destroy_link_1(&link->lid, &dev_error, client) != RPC_SUCCESS) {
 		clnt_perror(client,ip);
 		return -1;
 		}
@@ -537,18 +509,7 @@ int	vxi11_send(CLIENT *client, VXI11_LINK *link, char *cmd) {
  * though, for when we are sending fixed length data blocks. */
 int	vxi11_send(CLIENT *client, VXI11_LINK *link, char *cmd, unsigned long len) {
 Device_WriteParms write_parms;
-Device_WriteResp *write_resp;
 int	bytes_left = (int)len;
-
-/* Do we really need to create a link each time? We do if there are multiple
- * clients. For some reason, each time you create a link, it's always got the
- * same address (ie it's static) so, if the library is talking to more than
- * one client, then you must (re)create the link to the client (device) you
- * want to talk to. Only putting it in the send function assumes that you're
- * never going to ask for something without sending a query first.
- * There MUST be a better way of doing it than this... surely it slows things
- * down? */
-	if (VXI11_ENABLE_MULTIPLE_CLIENTS == 1)	vxi11_open_link(&client, &link);
 
 	write_parms.lid			= link->lid;
 	write_parms.io_timeout		= VXI11_DEFAULT_TIMEOUT;
@@ -557,6 +518,9 @@ int	bytes_left = (int)len;
 /* We can only write (link->maxRecvSize) bytes at a time, so we sit in a loop,
  * writing a chunk at a time, until we're done. */
 	do {
+                Device_WriteResp write_resp;
+                memset(&write_resp, 0, sizeof(write_resp));
+
 		if (bytes_left <= link->maxRecvSize) {
 			write_parms.flags		= 8;
 			write_parms.data.data_len	= bytes_left;
@@ -566,20 +530,19 @@ int	bytes_left = (int)len;
 			write_parms.data.data_len	= link->maxRecvSize;
 			}
 		write_parms.data.data_val	= cmd + (len - bytes_left);
-		write_resp = device_write_1(&write_parms, client);
-
-		if(write_resp==NULL){
+		
+		if(device_write_1(&write_parms, &write_resp, client) != RPC_SUCCESS) {
 			return -VXI11_NULL_WRITE_RESP; /* The instrument did not acknowledge the write, just completely
 							  dropped it. There was no vxi11 comms error as such, the 
 							  instrument is just being rude. Usually occurs when the instrument
 							  is busy. If we don't check this first, then the following 
 							  line causes a seg fault */
 			}
-		if (write_resp->error != 0) {
-			printf("vxi11_user: write error: %d\n",write_resp->error);
-			return -(write_resp->error);
+		if (write_resp . error != 0) {
+			printf("vxi11_user: write error: %d\n",write_resp . error);
+			return -(write_resp . error);
 			}
-		bytes_left -= write_resp->size;
+		bytes_left -= write_resp . size;
 		} while (bytes_left > 0);
 
 	return 0;
@@ -596,7 +559,7 @@ long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long
 
 long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len, unsigned long timeout) {
 Device_ReadParms read_parms;
-Device_ReadResp *read_resp;
+Device_ReadResp  read_resp;
 long	reason;
 long	curr_pos = 0;
 
@@ -608,28 +571,33 @@ long	curr_pos = 0;
 	read_parms.termChar		= 0;
 
 	do {
-		read_resp = device_read_1(&read_parms, client);
-		if(read_resp==NULL){
+                memset(&read_resp, 0, sizeof(read_resp));
+
+		read_resp.data.data_val = buffer + curr_pos;
+		read_resp.data.data_len = len    - curr_pos;
+
+		if(device_read_1(&read_parms, &read_resp, client) != RPC_SUCCESS) {
 			return -VXI11_NULL_READ_RESP; /* there is nothing to read. Usually occurs after sending a query
 							 which times out on the instrument. If we don't check this first,
 							 then the following line causes a seg fault */
 			}
-		if (read_resp->error != 0) {
-			printf("vxi11_user: read error: %d\n",read_resp->error);
-			return -(read_resp->error);
+ 		if (read_resp . error != 0) {
+			printf("vxi11_user: read error: %d\n",read_resp . error);
+			return -(read_resp . error);
 			}
-		if((curr_pos + read_resp->data.data_len) <= len) {
-			memcpy(buffer+curr_pos, read_resp->data.data_val, read_resp->data.data_len);
-			curr_pos+=read_resp->data.data_len;
+
+		if((curr_pos + read_resp . data.data_len) <= len) {
+//			memcpy(buffer+curr_pos, read_resp . data.data_val, read_resp . data.data_len);
+			curr_pos += read_resp . data.data_len;
 			}
 		else {
-			printf("xvi11_user: read error: buffer too small. need %ld bytes\n",(curr_pos + read_resp->data.data_len));
+			printf("xvi11_user: read error: buffer too small. need %ld bytes\n",(curr_pos + read_resp . data.data_len));
 			return -100;
 			}
-		reason=read_resp->reason;
+		reason = read_resp . reason;
 		/* free(read_resp->data.data_val); */ /* Apparently this is not needed and can cause crashes (Manfred Scheible, 26/10/06) */
 		} while (reason < 4);
-	return (curr_pos + read_resp->data.data_len); /*actual number of bytes received*/
+	return (curr_pos); /*actual number of bytes received*/
 
 	}
 
