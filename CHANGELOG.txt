@@ -1,4 +1,59 @@
 ------------------------------------------------------------------------------
+be accommodated, and for tidying some things up.
+
+------------------------------------------------------------------------------
+vxi11_1.04 - 10/07/2007
+
+Patch applied, which was kindly provided by Robert Larice. This sorts out
+the confusion (on my part) about the structures returned by the rpcgen
+generated *_1() functions... these are statically allocated temporary structs,
+apparently. In the words of Robert Larice:
+
+******
+Hello Dr. Sharples,
+
+  I'm sending some patches for your nice gem "vxi11_1.03"
+
+  In the source code there were some strange comments, concerning
+   a commented free() around ... Manfred Scheible ...
+  and some notes, suggesting you had trouble to get more than one link
+    working.
+
+  I think thats caused by some misuse of the rpcgen generated subroutines.
+  1) those rpcgen generated *_1 functions returned pointers to
+       statically allocated temporary structs.
+     those where meant to be instantly copied to the user's space,
+       which wasn't done
+     thus instead of
+       Device_ReadResp  *read_resp;
+       read_resp = device_read_1(...)
+     one should have written someting like:
+       Device_ReadResp  *read_resp;
+       read_resp = malloc(...)
+       memcpy(read_resp, device_read_1(...), ...)
+  2) but a better fix is to use the rpcgen -M Flag
+       which allows to pass the memory space as a third argument
+     so one can write
+       Device_ReadResp  *read_resp;
+       read_resp = malloc(...)
+       device_read_1(..., read_resp, ...)
+     furthermore this is now automatically thread save
+  3) the rpcgen function device_read_1
+       expects a target buffer to be passed via read_resp
+     which was not done.
+  4) the return value of vxi11_receive() was computed incorrectly
+  5) minor,  Makefile typo's
+      CFLAGS versus
+      CLFAGS
+
+******
+
+Robert didn't have more than one device to try the patch with, but I've just
+tried it and everything seems fine. So I've removed all references to the
+VXI11_ENABLE_MULTIPLE_CLIENTS global variable, and removed the call to
+vxi11_open_link() from the vxi11_send() fn. There has been an associated
+tidying of functions, and removal of some comments.
+
 Thanks once again to Robert Larice for the patch and the explanation!
 
 ------------------------------------------------------------------------------
