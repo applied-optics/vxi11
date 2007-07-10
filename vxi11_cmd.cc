@@ -1,7 +1,10 @@
 /* Revision history: */
-/* $Id: vxi11_cmd.cc,v 1.2 2006-06-26 12:43:11 sds Exp $ */
+/* $Id: vxi11_cmd.cc,v 1.3 2007-07-10 13:45:00 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2006/06/26 12:43:11  sds
+ * Used the new vxi11_() functions that used the CLINK structure.
+ *
  * Revision 1.1  2006/06/26 10:23:52  sds
  * Initial revision
  *
@@ -37,6 +40,7 @@
 int	main(int argc, char *argv[]) {
 
 static char	*device_ip;
+static char	*device_name;
 char		cmd[256];
 char		buf[BUF_LEN];
 int		ret;
@@ -45,14 +49,19 @@ CLINK		*clink;
 
 	clink = new CLINK;
 
-	if (argc != 2) {
-		printf("usage: %s www.xxx.yyy.zzz (enter your device's IP)\n",argv[0]);
+	if (argc < 2) {
+		printf("usage: %s your.inst.ip.addr [device_name]\n",argv[0]);
 		exit(1);
 		}
 
 	device_ip = argv[1];
-
-	ret=vxi11_open_device(device_ip,clink);
+	if (argc > 2) {
+		device_name = argv[2];
+		ret=vxi11_open_device(device_ip,clink,device_name);
+		}
+	else {
+		ret=vxi11_open_device(device_ip,clink);
+		}
 
 	if (ret != 0) {
 		printf("Error: could not open device %s, quitting\n",device_ip);
@@ -83,3 +92,4 @@ CLINK		*clink;
 	ret=vxi11_close_device(device_ip,clink);
 	return 0;
 	}
+
