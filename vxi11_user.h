@@ -1,7 +1,10 @@
 /* Revision history: */
-/* $Id: vxi11_user.h,v 1.6 2006-12-08 11:47:14 ijc Exp $ */
+/* $Id: vxi11_user.h,v 1.7 2007-07-10 11:20:43 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2006/12/08 11:47:14  ijc
+ * error on last ci, sorted.
+ *
  * Revision 1.5  2006/12/08 11:45:29  ijc
  * added #define VXI11_NULL_READ_RESP
  *
@@ -105,7 +108,6 @@ double	vxi11_obtain_double_value(CLINK *link, char *cmd);
  * delving this deep in use, but it's where the real nitty gritty is. */
 int	vxi11_open_device(char *ip, CLIENT **client, VXI11_LINK **link);
 int	vxi11_open_link(char *ip, CLIENT **client, VXI11_LINK **link);
-int	vxi11_open_link(CLIENT **client, VXI11_LINK **link);
 int	vxi11_close_device(char *ip, CLIENT *client, VXI11_LINK *link);
 int	vxi11_close_link(char *ip, CLIENT *client, VXI11_LINK *link);
 int	vxi11_send(CLIENT *client, VXI11_LINK *link, char *cmd);
