@@ -1,4 +1,34 @@
 ------------------------------------------------------------------------------
+vxi11_1.05 - 11/07/2007
+
+Added the ability to specify a "device name" when calling vxi11_open_device().
+For regular VXI11-based instruments, such as scopes and AFGs, the device name
+is usually "hard wired" to be "inst0", and up to now this has been hard wired
+into the vxi11_user code. However, devices such as LAN to GPIB gateways need
+some way of distinguishing between different devices... they are a single
+client (one IP address), with multiple devices.
+
+The vxi11_user fn, vxi11_open_device(), now takes a third argument
+(char *device).
+This gets passed to the core vxi11_open_device() fn (the one that deals with
+separate clients and links), and the core vxi11_open_link() fn; these two
+core functions have also had an extra parameter added accordingly. In order
+to not break the API, a wrapper function is provided in the form of the
+original vxi11_open_device() fn, that just takes 2 arguments
+(char *ip, CLINK *clink), this then passes "inst0" as the device argument.
+Backwards-compatible wrappers for the core functions have NOT been provided.
+These are generally not used from userland anyway. Hopefully this won't
+upset anyone!
+
+vxi11_cmd, the simple test utility, has also been updated. You can now,
+optionally, pass the device_name as a second argument (after the ip
+address). The source has been renamed to vxi11_cmd.cc (from vxi11_cmd.c), as
+it is C++ code not C.
+
+Some minor tidying up in vxi11_user.h
+
+With thanks to Oliver Schulz for bringing LAN to GPIB gateways to my
+attention, for suggesting changes to the vxi11_user library to allow them to
 be accommodated, and for tidying some things up.
 
 ------------------------------------------------------------------------------
