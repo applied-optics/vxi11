@@ -1,7 +1,13 @@
 /* Revision history: */
-/* $Id: vxi11_user.h,v 1.7 2007-07-10 11:20:43 sds Exp $ */
+/* $Id: vxi11_user.h,v 1.8 2007-07-10 13:54:11 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2007/07/10 11:20:43  sds
+ * removed the following function:
+ * int   vxi11_open_link(CLIENT **client, VXI11_LINK **link);
+ * ...since it was no longer needed, following the patch by
+ * Robert Larice.
+ *
  * Revision 1.6  2006/12/08 11:47:14  ijc
  * error on last ci, sorted.
  *
@@ -86,7 +92,8 @@ typedef	struct	CLINK CLINK;
  * write wrappers for these functions than to re-write the original functions
  * themselves. These are the 4 (or 6 if you like) key user functions that you
  * should probably be using. They all use the CLINK structure. */
-int     vxi11_open_device(char *ip, CLINK *clink);
+int	vxi11_open_device(char *ip, CLINK *clink);
+int	vxi11_open_device(char *ip, CLINK *clink, char *device);
 int	vxi11_close_device(char *ip, CLINK *clink);
 int	vxi11_send(CLINK *clink, char *cmd);
 int	vxi11_send(CLINK *clink, char *cmd, unsigned long len);
@@ -106,8 +113,8 @@ double	vxi11_obtain_double_value(CLINK *link, char *cmd);
  * retained the original functions and just written clink wrappers for them
  * (see above) as it's perhaps a little clearer this way. Probably not worth
  * delving this deep in use, but it's where the real nitty gritty is. */
-int	vxi11_open_device(char *ip, CLIENT **client, VXI11_LINK **link);
-int	vxi11_open_link(char *ip, CLIENT **client, VXI11_LINK **link);
+int	vxi11_open_device(char *ip, CLIENT **client, VXI11_LINK **link, char *device);
+int	vxi11_open_link(char *ip, CLIENT **client, VXI11_LINK **link, char *device);
 int	vxi11_close_device(char *ip, CLIENT *client, VXI11_LINK *link);
 int	vxi11_close_link(char *ip, CLIENT *client, VXI11_LINK *link);
 int	vxi11_send(CLIENT *client, VXI11_LINK *link, char *cmd);
