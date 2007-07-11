@@ -1,7 +1,13 @@
 /* Revision history: */
-/* $Id: vxi11_user.h,v 1.8 2007-07-10 13:54:11 sds Exp $ */
+/* $Id: vxi11_user.h,v 1.9 2007-07-11 14:20:56 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  2007/07/10 13:54:11  sds
+ * Added extra function:
+ * int     vxi11_open_device(char *ip, CLINK *clink, char *device);
+ * This replaces the original vxi11_open_device fn, which did not pass
+ * a char *device. Wrapper fn used for backwards compatibility.
+ *
  * Revision 1.7  2007/07/10 11:20:43  sds
  * removed the following function:
  * int   vxi11_open_link(CLIENT **client, VXI11_LINK **link);
@@ -61,13 +67,10 @@
 #define	__VXI11_USER__
 #include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
 #include <string.h>
 
 #include <rpc/rpc.h>
 #include "vxi11.h"
-
-using namespace std;
 
 #define	VXI11_DEFAULT_TIMEOUT	10000	/* in ms */
 #define	VXI11_READ_TIMEOUT	2000	/* in ms */
