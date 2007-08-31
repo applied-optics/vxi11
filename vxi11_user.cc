@@ -1,7 +1,19 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.11 2007-07-10 13:49:18 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.12 2007-08-31 10:32:39 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.11  2007/07/10 13:49:18  sds
+ * Changed the vxi11_open_device() fn to accept a third argument, char *device.
+ * This gets passed to the core vxi11_open_device() fn (the one that deals with
+ * separate clients and links), and the core vxi11_open_link() fn; these two
+ * core functions have also had an extra parameter added accordingly. In order
+ * to not break the API, a wrapper function is provided in the form of the
+ * original vxi11_open_device() fn, that just takes 2 arguments
+ * (char *ip, CLINK *clink), this then passes "inst0" as the device argument.
+ * Backwards-compatible wrappers for the core functions have NOT been provided.
+ * These are generally not used from userland anyway. Hopefully this won't
+ * upset anyone!
+ *
  * Revision 1.10  2007/07/10 11:12:12  sds
  * Patches provided by Robert Larice. This basically solves the problem
  * of having to recreate a link each time you change client. In the words
@@ -265,7 +277,7 @@ int	device_no=-1;
  * "device" per client. This is the case for most (if not all) VXI11
  * instruments; however, it is _not_ the case for devices such as LAN to GPIB
  * gateways. These are single clients that communicate to many instruments
- * (devices). In order to differentiate between then, we need to pass a device
+ * (devices). In order to differentiate between them, we need to pass a device
  * name. This gets used in the vxi11_open_link() fn, as the link_parms.device
  * value. */
 int	vxi11_open_device(char *ip, CLINK *clink) {
@@ -603,15 +615,19 @@ int	bytes_left = (int)len;
 /* RECEIVE FUNCTIONS *
  * ================= */
 
-/* wrapper, for default timeout */
-long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len) {
-	return vxi11_receive(client, link, buffer, len, VXI11_READ_TIMEOUT);
+// It appeared that this function wasn't correctly dealing with more data available than specified in len.
+// This patch attempts to fix this issue.	RDP 2007/8/13
+
+/* wrapper, for default timeout */ long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len) { return vxi11_receive(client, link, buffer, len, VXI11_READ_TIMEOUT);
 	}
+
+#define RCV_END_BIT	0x04	// An end indicator has been read
+#define RCV_CHR_BIT	0x02	// A termchr is set in flags and a character which matches termChar is transferred
+#define RCV_REQCNT_BIT	0x01	// requestSize bytes have been transferred.  This includes a request size of zero.
 
 long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len, unsigned long timeout) {
 Device_ReadParms read_parms;
 Device_ReadResp  read_resp;
-long	reason;
 long	curr_pos = 0;
 
 	read_parms.lid			= link->lid;
@@ -625,7 +641,7 @@ long	curr_pos = 0;
                 memset(&read_resp, 0, sizeof(read_resp));
 
 		read_resp.data.data_val = buffer + curr_pos;
-		read_resp.data.data_len = len    - curr_pos;
+		read_parms.requestSize = len    - curr_pos;	// Never request more total data than originally specified in len
 
 		if(device_read_1(&read_parms, &read_resp, client) != RPC_SUCCESS) {
 			return -VXI11_NULL_READ_RESP; /* there is nothing to read. Usually occurs after sending a query
@@ -633,21 +649,30 @@ long	curr_pos = 0;
 							 then the following line causes a seg fault */
 			}
  		if (read_resp . error != 0) {
+			/* Read failed for reason specified in error code.
+			*  0     no error
+			*  4     invalid link identifier
+			*  11    device locked by another link
+			*  15    I/O timeout
+			*  17    I/O error
+			*  23    abort
+			*/
+
 			printf("vxi11_user: read error: %d\n",read_resp . error);
 			return -(read_resp . error);
 			}
 
 		if((curr_pos + read_resp . data.data_len) <= len) {
-//			memcpy(buffer+curr_pos, read_resp . data.data_val, read_resp . data.data_len);
 			curr_pos += read_resp . data.data_len;
 			}
-		else {
-			printf("xvi11_user: read error: buffer too small. need %ld bytes\n",(curr_pos + read_resp . data.data_len));
+		if( (read_resp.reason & RCV_END_BIT) || (read_resp.reason & RCV_CHR_BIT) ) {
+			break;
+			}
+		else if( curr_pos == len ) {
+			printf("xvi11_user: read error: buffer too small. Read %d bytes without hitting terminator.\n", curr_pos );
 			return -100;
 			}
-		reason = read_resp . reason;
-		/* free(read_resp->data.data_val); */ /* Apparently this is not needed and can cause crashes (Manfred Scheible, 26/10/06) */
-		} while (reason < 4);
+		} while(1);
 	return (curr_pos); /*actual number of bytes received*/
 
 	}
