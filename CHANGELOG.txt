@@ -1,4 +1,13 @@
 ------------------------------------------------------------------------------
+vxi11_1.06 - 31/08/2007
+
+Bug fix in vxi11_receive(), to ensure that no more than "len" bytes are ever 
+received (and so avoiding a segmentation fault). This was a bug introduced in 
+release 1.04 whilst making some other changes to the vxi11_receive() fn.
+
+Many thanks to Rob Penny for spotting the bug and providing a patch.
+
+------------------------------------------------------------------------------
 vxi11_1.05 - 11/07/2007
 
 Added the ability to specify a "device name" when calling vxi11_open_device().
