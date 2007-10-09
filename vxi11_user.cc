@@ -1,7 +1,14 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.12 2007-08-31 10:32:39 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.13 2007-10-09 08:42:57 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.12  2007/08/31 10:32:39  sds
+ * Bug fix in vxi11_receive(), to ensure that no more than "len"
+ * bytes are ever received (and so avoiding a segmentation fault).
+ * This was a bug introduced in release 1.04 (RCS 1.10) whilst
+ * making some other changes to the vxi11_receive() fn. Many thanks
+ * to Rob Penny for spotting the bug and providing a patch.
+ *
  * Revision 1.11  2007/07/10 13:49:18  sds
  * Changed the vxi11_open_device() fn to accept a third argument, char *device.
  * This gets passed to the core vxi11_open_device() fn (the one that deals with
@@ -412,15 +419,16 @@ char		scan_cmd[20];
 
 	/* first find out how many digits */
 	sscanf(in_buffer,"#%1d",&ndigits);
-	/* now that we know, we can convert the next <ndigits> bytes into an unsigned long */
-	sprintf(scan_cmd,"#%%1d%%%dlu",ndigits);
-	//printf("The sscanf command is: %s\n",scan_cmd);
-	sscanf(in_buffer,scan_cmd,&ndigits,&returned_bytes);
-	//printf("using sscanf, ndigits=%d, returned_bytes=%lu\n",ndigits,returned_bytes);
-
-	memcpy(buffer, in_buffer+(ndigits+2), returned_bytes);
-	delete[] in_buffer;
-	return (long) returned_bytes;
+	/* some instruments, if there is a problem acquiring the data, return only "#0" */
+	if (ndigits > 0) {
+		/* now that we know, we can convert the next <ndigits> bytes into an unsigned long */
+		sprintf(scan_cmd,"#%%1d%%%dlu",ndigits);
+		sscanf(in_buffer,scan_cmd,&ndigits,&returned_bytes);
+		memcpy(buffer, in_buffer+(ndigits+2), returned_bytes);
+		delete[] in_buffer;
+		return (long) returned_bytes;
+		}
+	else return 0;
 	}
 
 
