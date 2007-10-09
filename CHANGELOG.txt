@@ -1,4 +1,11 @@
 ------------------------------------------------------------------------------
+vxi11_1.07 - 9/10/2007
+
+Minor change to vxi11_receive_data_block(), this fn now copes with instruments
+that return just "#0" (for whatever reason). Suggestion by Jarek Sadowski,
+gratefully received.
+
+------------------------------------------------------------------------------
 vxi11_1.06 - 31/08/2007
 
 Bug fix in vxi11_receive(), to ensure that no more than "len" bytes are ever 
