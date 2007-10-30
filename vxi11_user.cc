@@ -1,7 +1,12 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.13 2007-10-09 08:42:57 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.14 2007-10-30 12:46:48 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.13  2007/10/09 08:42:57  sds
+ * Minor change to vxi11_receive_data_block(), this fn now
+ * copes with instruments that return just "#0" (for whatever
+ * reason). Suggestion by Jarek Sadowski.
+ *
  * Revision 1.12  2007/08/31 10:32:39  sds
  * Bug fix in vxi11_receive(), to ensure that no more than "len"
  * bytes are ever received (and so avoiding a segmentation fault).
@@ -226,7 +231,7 @@ int	VXI11_LINK_COUNT[VXI11_MAX_CLIENTS];
 
 /* Use this function from user land to open a device and create a link. Can be
  * used multiple times for the same device (the library will keep track).*/
-int	vxi11_open_device(char *ip, CLINK *clink, char *device) {
+int	vxi11_open_device(const char *ip, CLINK *clink, char *device) {
 int	ret;
 int	l;
 int	device_no=-1;
@@ -287,9 +292,12 @@ int	device_no=-1;
  * (devices). In order to differentiate between them, we need to pass a device
  * name. This gets used in the vxi11_open_link() fn, as the link_parms.device
  * value. */
-int	vxi11_open_device(char *ip, CLINK *clink) {
-	return vxi11_open_device(ip, clink, "inst0");
+int	vxi11_open_device(const char *ip, CLINK *clink) {
+	char device[6];
+	strncpy(device,"inst0",6);
+	return vxi11_open_device(ip, clink, device);
 	}
+
 
 
 /* CLOSE FUNCTION *
@@ -297,7 +305,7 @@ int	vxi11_open_device(char *ip, CLINK *clink) {
 
 /* Use this function from user land to close a device and/or sever a link. Can
  * be used multiple times for the same device (the library will keep track).*/
-int     vxi11_close_device(char *ip, CLINK *clink) {
+int     vxi11_close_device(const char *ip, CLINK *clink) {
 int     l,ret;
 int     device_no = -1;
 
@@ -334,13 +342,13 @@ int     device_no = -1;
 
 /* A _lot_ of the time we are sending text strings, and can safely rely on
  * strlen(cmd). */
-int	vxi11_send(CLINK *clink, char *cmd) {
+int	vxi11_send(CLINK *clink, const char *cmd) {
 	return vxi11_send(clink, cmd, strlen(cmd));
 	}
 
 /* We still need the version of the function where the length is set explicitly
  * though, for when we are sending fixed length data blocks. */
-int	vxi11_send(CLINK *clink, char *cmd, unsigned long len) {
+int	vxi11_send(CLINK *clink, const char *cmd, unsigned long len) {
 	return vxi11_send(clink->client, clink->link, cmd, len);
 	}
 
@@ -366,7 +374,7 @@ long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long 
 
 /* SEND FIXED LENGTH DATA BLOCK FUNCTION *
  * ===================================== */
-int	vxi11_send_data_block(CLINK *clink, char *cmd, char *buffer, unsigned long len) {
+int	vxi11_send_data_block(CLINK *clink, const char *cmd, char *buffer, unsigned long len) {
 char	*out_buffer;
 int	cmd_len=strlen(cmd);
 int	ret;
@@ -437,7 +445,7 @@ char		scan_cmd[20];
 
 /* This is mainly a useful function for the overloaded vxi11_obtain_value()
  * fn's, but is also handy and useful for user and library use */
-long	vxi11_send_and_receive(CLINK *clink, char *cmd, char *buf, unsigned long buf_len, unsigned long timeout) {
+long	vxi11_send_and_receive(CLINK *clink, const char *cmd, char *buf, unsigned long buf_len, unsigned long timeout) {
 int	ret;
 long	bytes_returned;
 	do {
@@ -467,7 +475,7 @@ long	bytes_returned;
 
 /* FUNCTIONS TO RETURN A LONG INTEGER VALUE SENT AS RESPONSE TO A QUERY *
  * ==================================================================== */
-long	vxi11_obtain_long_value(CLINK *clink, char *cmd, unsigned long timeout) {
+long	vxi11_obtain_long_value(CLINK *clink, const char *cmd, unsigned long timeout) {
 char	buf[50]; /* 50=arbitrary length... more than enough for one number in ascii */
 	memset(buf, 0, 50);
 	if (vxi11_send_and_receive(clink, cmd, buf, 50, timeout) != 0) {
@@ -478,14 +486,14 @@ char	buf[50]; /* 50=arbitrary length... more than enough for one number in ascii
 	}
 
 /* Lazy wrapper function with default read timeout */
-long	vxi11_obtain_long_value(CLINK *clink, char *cmd) {
+long	vxi11_obtain_long_value(CLINK *clink, const char *cmd) {
 	return vxi11_obtain_long_value(clink, cmd, VXI11_READ_TIMEOUT);
 	}
 
 
 /* FUNCTIONS TO RETURN A DOUBLE FLOAT VALUE SENT AS RESPONSE TO A QUERY *
  * ==================================================================== */
-double	vxi11_obtain_double_value(CLINK *clink, char *cmd, unsigned long timeout) {
+double	vxi11_obtain_double_value(CLINK *clink, const char *cmd, unsigned long timeout) {
 char	buf[50]; /* 50=arbitrary length... more than enough for one number in ascii */
 double	val;
 	memset(buf, 0, 50);
@@ -498,7 +506,7 @@ double	val;
 	}
 
 /* Lazy wrapper function with default read timeout */
-double	vxi11_obtain_double_value(CLINK *clink, char *cmd) {
+double	vxi11_obtain_double_value(CLINK *clink, const char *cmd) {
 	return vxi11_obtain_double_value(clink, cmd, VXI11_READ_TIMEOUT);
 	}
 
@@ -510,7 +518,7 @@ double	vxi11_obtain_double_value(CLINK *clink, char *cmd) {
 
 /* OPEN FUNCTIONS *
  * ============== */
-int	vxi11_open_device(char *ip, CLIENT **client, VXI11_LINK **link, char *device) {
+int	vxi11_open_device(const char *ip, CLIENT **client, VXI11_LINK **link, char *device) {
 
 	*client = clnt_create(ip, DEVICE_CORE, DEVICE_CORE_VERSION, "tcp");
 
@@ -522,7 +530,7 @@ int	vxi11_open_device(char *ip, CLIENT **client, VXI11_LINK **link, char *device
 	return vxi11_open_link(ip, client, link, device);
 	}
 
-int	vxi11_open_link(char *ip, CLIENT **client, VXI11_LINK **link, char *device) {
+int	vxi11_open_link(const char *ip, CLIENT **client, VXI11_LINK **link, char *device) {
 
 Create_LinkParms link_parms;
 
@@ -544,7 +552,7 @@ Create_LinkParms link_parms;
 
 /* CLOSE FUNCTIONS *
  * =============== */
-int	vxi11_close_device(char *ip, CLIENT *client, VXI11_LINK *link) {
+int	vxi11_close_device(const char *ip, CLIENT *client, VXI11_LINK *link) {
 int	ret;
 
 	ret = vxi11_close_link(ip, client, link);
@@ -554,7 +562,7 @@ int	ret;
 	return ret;
 	}
 
-int	vxi11_close_link(char *ip, CLIENT *client, VXI11_LINK *link) {
+int	vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link) {
 Device_Error dev_error;
         memset(&dev_error, 0, sizeof(dev_error)); 
 
@@ -572,15 +580,19 @@ Device_Error dev_error;
 
 /* A _lot_ of the time we are sending text strings, and can safely rely on
  * strlen(cmd). */
-int	vxi11_send(CLIENT *client, VXI11_LINK *link, char *cmd) {
+int	vxi11_send(CLIENT *client, VXI11_LINK *link, const char *cmd) {
 	return vxi11_send(client, link, cmd, strlen(cmd));
 	}
 
 /* We still need the version of the function where the length is set explicitly
  * though, for when we are sending fixed length data blocks. */
-int	vxi11_send(CLIENT *client, VXI11_LINK *link, char *cmd, unsigned long len) {
+int	vxi11_send(CLIENT *client, VXI11_LINK *link, const char *cmd, unsigned long len) {
 Device_WriteParms write_parms;
 int	bytes_left = (int)len;
+char	*send_cmd;
+
+	send_cmd = new char[len];
+	strncpy(send_cmd, cmd, len);
 
 	write_parms.lid			= link->lid;
 	write_parms.io_timeout		= VXI11_DEFAULT_TIMEOUT;
@@ -600,9 +612,10 @@ int	bytes_left = (int)len;
 			write_parms.flags		= 0;
 			write_parms.data.data_len	= link->maxRecvSize;
 			}
-		write_parms.data.data_val	= cmd + (len - bytes_left);
+		write_parms.data.data_val	= send_cmd + (len - bytes_left);
 		
 		if(device_write_1(&write_parms, &write_resp, client) != RPC_SUCCESS) {
+			delete[] send_cmd;
 			return -VXI11_NULL_WRITE_RESP; /* The instrument did not acknowledge the write, just completely
 							  dropped it. There was no vxi11 comms error as such, the 
 							  instrument is just being rude. Usually occurs when the instrument
@@ -611,11 +624,13 @@ int	bytes_left = (int)len;
 			}
 		if (write_resp . error != 0) {
 			printf("vxi11_user: write error: %d\n",write_resp . error);
+			delete[] send_cmd;
 			return -(write_resp . error);
 			}
 		bytes_left -= write_resp . size;
 		} while (bytes_left > 0);
 
+	delete[] send_cmd;
 	return 0;
 	}
 
