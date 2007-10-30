@@ -1,7 +1,11 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.14 2007-10-30 12:46:48 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.15 2007-10-30 12:55:15 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.14  2007/10/30 12:46:48  sds
+ * changed a lot of char *'s to const char *'s in an attempt to get
+ * rid of pedantic gcc compiler warnings.
+ *
  * Revision 1.13  2007/10/09 08:42:57  sds
  * Minor change to vxi11_receive_data_block(), this fn now
  * copes with instruments that return just "#0" (for whatever
@@ -592,7 +596,7 @@ int	bytes_left = (int)len;
 char	*send_cmd;
 
 	send_cmd = new char[len];
-	strncpy(send_cmd, cmd, len);
+	memcpy(send_cmd, cmd, len);
 
 	write_parms.lid			= link->lid;
 	write_parms.io_timeout		= VXI11_DEFAULT_TIMEOUT;
