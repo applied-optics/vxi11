@@ -1,4 +1,10 @@
 ------------------------------------------------------------------------------
+vxi11_1.08 - 3/09/2009
+
+Added a sanity check for link->maxRecvSize to make sure it's >0. This gets 
+around a bug in some versions of the Agilent Infiniium scope software.
+
+------------------------------------------------------------------------------
 vxi11_1.07 - 9/10/2007
 
 Minor change to vxi11_receive_data_block(), this fn now copes with instruments
