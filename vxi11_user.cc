@@ -1,7 +1,11 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.15 2007-10-30 12:55:15 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.16 2008-09-03 14:30:13 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.15  2007/10/30 12:55:15  sds
+ * changed the erroneous strncpy() to memcpy() in vxi11_send,
+ * as we could be sending binary data (not just strings).
+ *
  * Revision 1.14  2007/10/30 12:46:48  sds
  * changed a lot of char *'s to const char *'s in an attempt to get
  * rid of pedantic gcc compiler warnings.
@@ -604,6 +608,7 @@ char	*send_cmd;
 
 /* We can only write (link->maxRecvSize) bytes at a time, so we sit in a loop,
  * writing a chunk at a time, until we're done. */
+
 	do {
                 Device_WriteResp write_resp;
                 memset(&write_resp, 0, sizeof(write_resp));
@@ -614,7 +619,16 @@ char	*send_cmd;
 			}
 		else {
 			write_parms.flags		= 0;
-			write_parms.data.data_len	= link->maxRecvSize;
+			/* We need to check that maxRecvSize is a sane value (ie >0). Believe it
+			 * or not, on some versions of Agilent Infiniium scope firmware the scope
+			 * returned "0", which breaks Rule B.6.3 of the VXI-11 protocol. Nevertheless
+			 * we need to catch this, otherwise the program just hangs. */
+			if (link->maxRecvSize > 0) {
+				write_parms.data.data_len	= link->maxRecvSize;
+				}
+			else {
+				write_parms.data.data_len	= 4096; /* pretty much anything should be able to cope with 4kB */
+				}
 			}
 		write_parms.data.data_val	= send_cmd + (len - bytes_left);
 		
