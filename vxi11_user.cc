@@ -1,7 +1,12 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.16 2008-09-03 14:30:13 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.17 2008-10-20 07:59:54 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.16  2008/09/03 14:30:13  sds
+ * added sanity check for link->maxRecvSize to make sure it's >0.
+ * This got around a bug in some versions of the Agilent Infiniium
+ * scope software.
+ *
  * Revision 1.15  2007/10/30 12:55:15  sds
  * changed the erroneous strncpy() to memcpy() in vxi11_send,
  * as we could be sending binary data (not just strings).
@@ -94,7 +99,7 @@
  *
  * Revision 1.7  2006/12/06 16:27:47  sds
  * removed call to ANSI free() fn in vxi11_receive, which according to
- * Manfred Scheible "is not necessary and wrong (crashes)".
+ * Manfred S. "is not necessary and wrong (crashes)".
  *
  * Revision 1.6  2006/08/25 13:45:12  sds
  * Major improvements to the vxi11_send function. Now takes

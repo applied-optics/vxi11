@@ -73,7 +73,7 @@ Hello Dr. Sharples,
   I'm sending some patches for your nice gem "vxi11_1.03"
 
   In the source code there were some strange comments, concerning
-   a commented free() around ... Manfred Scheible ...
+   a commented free() around ... Manfred S. ...
   and some notes, suggesting you had trouble to get more than one link
     working.
 
@@ -117,7 +117,7 @@ Thanks once again to Robert Larice for the patch and the explanation!
 ------------------------------------------------------------------------------
 vxi11_1.03 - 29/01/2007
 
-Some bug-fixes (thanks to Manfred Scheible), and extra awareness of the
+Some bug-fixes (thanks to Manfred S.), and extra awareness of the
 possibility that instruments could time out after receiving a query WITHOUT
 causing an error condition. In some cases (prior to these changes) this
 could have resulted in a segmentation fault.
@@ -125,7 +125,7 @@ could have resulted in a segmentation fault.
 Specifically:
 
 (1) removed call to ANSI free() fn in vxi11_receive, which according to
-    Manfred Scheible "is not necessary and wrong (crashes)".
+    Manfred S. "is not necessary and wrong (crashes)".
 
 (2) added extra check in vxi11_receive() to see if read_resp==NULL.
     read_resp can apparently be NULL if (eg) you send an instrument a
