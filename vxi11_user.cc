@@ -1,7 +1,10 @@
 /* Revision history: */
-/* $Id: vxi11_user.cc,v 1.17 2008-10-20 07:59:54 sds Exp $ */
+/* $Id: vxi11_user.cc,v 1.18 2008-11-12 10:58:42 sds Exp $ */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.17  2008/10/20 07:59:54  sds
+ * Removed Manfred's surname at his request from the comments/acknowledgments.
+ *
  * Revision 1.16  2008/09/03 14:30:13  sds
  * added sanity check for link->maxRecvSize to make sure it's >0.
  * This got around a bug in some versions of the Agilent Infiniium
@@ -696,12 +699,22 @@ long	curr_pos = 0;
 			}
  		if (read_resp . error != 0) {
 			/* Read failed for reason specified in error code.
-			*  0     no error
-			*  4     invalid link identifier
-			*  11    device locked by another link
-			*  15    I/O timeout
-			*  17    I/O error
-			*  23    abort
+			*  (From published VXI-11 protocol, section B.5.2)
+			*  0	no error
+			*  1	syntax error
+			*  3	device not accessible
+			*  4	invalid link identifier
+			*  5	parameter error
+			*  6	channel not established
+			*  8	operation not supported
+			*  9	out of resources
+			*  11	device locked by another link
+			*  12	no lock held by this link
+			*  15	I/O timeout
+			*  17	I/O error
+			*  21	invalid address
+			*  23	abort
+			*  29	channel already established
 			*/
 
 			printf("vxi11_user: read error: %d\n",read_resp . error);
