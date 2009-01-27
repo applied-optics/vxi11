@@ -22,5 +22,5 @@ TAGS: $(wildcard *.c) $(wildcard *.h) $(wildcard *.cc)
 clean:
 	rm -f *.o vxi11_cmd vxi11.h vxi11_svc.c vxi11_xdr.c vxi11_clnt.c TAGS
 
-install:
+install: vxi11_cmd
 	$(INSTALL) vxi11_cmd /usr/local/bin/
