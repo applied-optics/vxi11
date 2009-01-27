@@ -1,6 +1,7 @@
 #CFLAGS = -Wall -g
 CFLAGS = -g
 INSTALL = install
+prefix = /usr/local
 
 .PHONY : install clean
 
@@ -23,4 +24,4 @@ clean:
 	rm -f *.o vxi11_cmd vxi11.h vxi11_svc.c vxi11_xdr.c vxi11_clnt.c TAGS
 
 install: vxi11_cmd
-	$(INSTALL) vxi11_cmd /usr/local/bin/
+	$(INSTALL) vxi11_cmd $(DESTDIR)$(prefix)/bin/
