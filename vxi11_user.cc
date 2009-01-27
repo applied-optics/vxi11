@@ -556,7 +556,7 @@ Create_LinkParms link_parms;
 	link_parms.lock_timeout	= VXI11_DEFAULT_TIMEOUT;
 	link_parms.device	= device;
 
-        *link = (Create_LinkResp *) calloc(1, sizeof(Create_LinkResp));
+	*link = (Create_LinkResp *) calloc(1, sizeof(Create_LinkResp));
 
 	if (create_link_1(&link_parms, *link, *client) != RPC_SUCCESS) {
 		clnt_perror(*client, ip);
@@ -580,7 +580,7 @@ int	ret;
 
 int	vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link) {
 Device_Error dev_error;
-        memset(&dev_error, 0, sizeof(dev_error)); 
+	memset(&dev_error, 0, sizeof(dev_error)); 
 
 	if (destroy_link_1(&link->lid, &dev_error, client) != RPC_SUCCESS) {
 		clnt_perror(client,ip);
@@ -618,8 +618,8 @@ char	*send_cmd;
  * writing a chunk at a time, until we're done. */
 
 	do {
-                Device_WriteResp write_resp;
-                memset(&write_resp, 0, sizeof(write_resp));
+		Device_WriteResp write_resp;
+		memset(&write_resp, 0, sizeof(write_resp));
 
 		if (bytes_left <= link->maxRecvSize) {
 			write_parms.flags		= 8;
