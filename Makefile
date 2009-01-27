@@ -1,6 +1,8 @@
 #CFLAGS = -Wall -g
 CFLAGS = -g
 
+.PHONY : install clean
+
 vxi11_cmd: vxi11_cmd.o vxi11_user.o vxi11_clnt.o vxi11_xdr.o
 	g++ $(CFLAGS) -o vxi11_cmd vxi11_cmd.o vxi11_user.o vxi11_clnt.o vxi11_xdr.o
 
