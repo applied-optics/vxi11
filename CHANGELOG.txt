@@ -1,4 +1,9 @@
 ------------------------------------------------------------------------------
+vxi11_xxxx - xx/xx/xxxx
+
+Makefile cleanups.
+
+------------------------------------------------------------------------------
 vxi11_1.08 - 3/09/2009
 
 Added a sanity check for link->maxRecvSize to make sure it's >0. This gets 
