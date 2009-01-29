@@ -496,12 +496,12 @@ char	*send_cmd;
 							  is busy. If we don't check this first, then the following 
 							  line causes a seg fault */
 			}
-		if (write_resp . error != 0) {
-			printf("vxi11_user: write error: %d\n", (int)write_resp . error);
+		if (write_resp.error != 0) {
+			printf("vxi11_user: write error: %d\n", (int)write_resp.error);
 			delete[] send_cmd;
-			return -(write_resp . error);
+			return -(write_resp.error);
 			}
-		bytes_left -= write_resp . size;
+		bytes_left -= write_resp.size;
 		} while (bytes_left > 0);
 
 	delete[] send_cmd;
@@ -545,7 +545,7 @@ unsigned long	curr_pos = 0;
 							 which times out on the instrument. If we don't check this first,
 							 then the following line causes a seg fault */
 			}
- 		if (read_resp . error != 0) {
+ 		if (read_resp.error != 0) {
 			/* Read failed for reason specified in error code.
 			*  (From published VXI-11 protocol, section B.5.2)
 			*  0	no error
@@ -565,12 +565,12 @@ unsigned long	curr_pos = 0;
 			*  29	channel already established
 			*/
 
-			printf("vxi11_user: read error: %d\n", (int)read_resp . error);
-			return -(read_resp . error);
+			printf("vxi11_user: read error: %d\n", (int)read_resp.error);
+			return -(read_resp.error);
 			}
 
-		if((curr_pos + read_resp . data.data_len) <= len) {
-			curr_pos += read_resp . data.data_len;
+		if((curr_pos + read_resp.data.data_len) <= len) {
+			curr_pos += read_resp.data.data_len;
 			}
 		if( (read_resp.reason & RCV_END_BIT) || (read_resp.reason & RCV_CHR_BIT) ) {
 			break;
