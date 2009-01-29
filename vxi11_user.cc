@@ -497,7 +497,7 @@ char	*send_cmd;
 							  line causes a seg fault */
 			}
 		if (write_resp . error != 0) {
-			printf("vxi11_user: write error: %d\n",write_resp . error);
+			printf("vxi11_user: write error: %d\n", (int)write_resp . error);
 			delete[] send_cmd;
 			return -(write_resp . error);
 			}
@@ -565,7 +565,7 @@ unsigned long	curr_pos = 0;
 			*  29	channel already established
 			*/
 
-			printf("vxi11_user: read error: %d\n",read_resp . error);
+			printf("vxi11_user: read error: %d\n", (int)read_resp . error);
 			return -(read_resp . error);
 			}
 
@@ -576,7 +576,7 @@ unsigned long	curr_pos = 0;
 			break;
 			}
 		else if( curr_pos == len ) {
-			printf("xvi11_user: read error: buffer too small. Read %d bytes without hitting terminator.\n", curr_pos );
+			printf("xvi11_user: read error: buffer too small. Read %d bytes without hitting terminator.\n", (int)curr_pos );
 			return -100;
 			}
 		} while(1);
