@@ -452,7 +452,7 @@ int	vxi11_send(CLIENT *client, VXI11_LINK *link, const char *cmd) {
  * though, for when we are sending fixed length data blocks. */
 int	vxi11_send(CLIENT *client, VXI11_LINK *link, const char *cmd, unsigned long len) {
 Device_WriteParms write_parms;
-int	bytes_left = (int)len;
+unsigned int	bytes_left = len;
 char	*send_cmd;
 
 	send_cmd = new char[len];
@@ -525,7 +525,7 @@ char	*send_cmd;
 long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len, unsigned long timeout) {
 Device_ReadParms read_parms;
 Device_ReadResp  read_resp;
-long	curr_pos = 0;
+unsigned long	curr_pos = 0;
 
 	read_parms.lid			= link->lid;
 	read_parms.requestSize		= len;
