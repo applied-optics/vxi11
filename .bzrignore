@@ -4,3 +4,4 @@ vxi11_clnt.c
 vxi11_svc.c
 vxi11_xdr.c
 TAGS
+vxi11_test.cc

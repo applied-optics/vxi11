@@ -1,7 +1,13 @@
 ------------------------------------------------------------------------------
-vxi11_xxxx - xx/xx/xxxx
+vxi11_1.09 - 7/06/2010
 
-Makefile cleanups.
+Moved over to bazaar VCS (from RCS).
+
+Makefile cleanups. Fixed signed/unsigned comparisons. Use consistent (and 
+sane) struct separator spacing in code.
+
+Fix int casting on printf statements to fix new compiler warnings/errors 
+(thanks to Shouri Chatterjee for pointing this out).
 
 ------------------------------------------------------------------------------
 vxi11_1.08 - 3/09/2009
