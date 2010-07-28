@@ -195,6 +195,9 @@ int     device_no = -1;
 		 * AND client) */
 		else {
 			ret = vxi11_close_device(ip, clink->client, clink->link);
+			/* Remove the IP address, so that if we re-open the same device
+			 * we do it properly */
+			memset(VXI11_IP_ADDRESS[device_no], 0, 20);
 			}
 		}
 	return ret;
