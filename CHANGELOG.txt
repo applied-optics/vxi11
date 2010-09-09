@@ -1,4 +1,12 @@
 ------------------------------------------------------------------------------
+vxi11_1.10 - 9/09/2010
+
+Bug fix (thanks to Stephan Mahr): in vxi11_close(), remove the IP address
+from the global array that keeps track of them so that if the same device
+is opened again, then a new client is created, rather than it attempting 
+to use the old one (which was destroyed on the previous close).
+
+------------------------------------------------------------------------------
 vxi11_1.09 - 7/06/2010
 
 Moved over to bazaar VCS (from RCS).
