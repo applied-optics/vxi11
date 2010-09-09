@@ -1,4 +1,4 @@
-VERSION=1.08
+VERSION=1.10
 
 #CFLAGS = -Wall -g
 CFLAGS = -g
