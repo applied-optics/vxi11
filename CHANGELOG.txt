@@ -1,4 +1,26 @@
 ------------------------------------------------------------------------------
+vxi11_x.xx - x/xx/xxxx
+
+vxi11_user code is now compiled as a shared library.
+
+Old split argument CLIENT and VXI11_LINK functions have been merged into the
+single CLINK argument functions.
+
+The wrapper functions for default timeouts have been removed and replaced by
+default arguments on the actual functions.
+
+vxi11_open_device() now returns a CLINK* rather than an int so that the memory
+allocation can be handled internally. This allows the end user to only need to
+have vxi11_user.h rather than all of the vxi11* headers.
+
+The global array to keep track of currently connected clients has been
+replaced with a singly linked list and so the maximum connection limit has
+been removed.
+
+A CMake build script has been included - this includes support for adding the
+required dependencies for compiling on Cygwin.
+
+------------------------------------------------------------------------------
 vxi11_1.10 - 9/09/2010
 
 Bug fix (thanks to Stephan Mahr): in vxi11_close(), remove the IP address
