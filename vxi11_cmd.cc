@@ -29,6 +29,10 @@
 #include "vxi11_user.h"
 #define BUF_LEN 100000
 
+#ifndef strncasecmp
+#define strncasecmp(a, b, c) stricmp(a, b)
+#endif
+
 int	main(int argc, char *argv[]) {
 
 static char	*device_ip;
@@ -64,7 +68,7 @@ CLINK		*clink;
 		printf("Input command or query ('q' to exit): ");
 		fgets(cmd,256,stdin);
 		cmd[strlen(cmd)-1] = 0;		// just gets rid of the \n
-		if (strncasecmp(cmd, "q",1) == 0) break;
+		if (strncasecmp(cmd, "q", 1) == 0) break;
 
 		if (vxi11_send(clink, cmd) < 0) break;
 		if (strstr(cmd, "?") != 0) {
