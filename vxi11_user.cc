@@ -271,17 +271,18 @@ int	vxi11_send(CLINK *clink, const char *cmd, unsigned long len) {
 #ifdef WIN32
 	ViStatus status;
 	char buf[256];
+	unsigned char	*send_cmd;
 #else
 Device_WriteParms write_parms;
+	char	*send_cmd;
 #endif
 unsigned int	bytes_left = len;
 unsigned long write_count;
-unsigned char	*send_cmd;
 
+#ifdef WIN32
 	send_cmd = new unsigned char[len];
 	memcpy(send_cmd, cmd, len);
 
-#ifdef WIN32
 	while(bytes_left > 0){
 		status = viWrite(clink->session, send_cmd + (len - bytes_left), bytes_left, &write_count);
 		if(status == VI_SUCCESS){
@@ -294,6 +295,9 @@ unsigned char	*send_cmd;
 		}
 	}
 #else
+	send_cmd = new char[len];
+	memcpy(send_cmd, cmd, len);
+
 	write_parms.lid			= clink->link->lid;
 	write_parms.io_timeout		= VXI11_DEFAULT_TIMEOUT;
 	write_parms.lock_timeout	= VXI11_DEFAULT_TIMEOUT;

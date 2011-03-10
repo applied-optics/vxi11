@@ -29,7 +29,7 @@
 #include "vxi11_user.h"
 #define BUF_LEN 100000
 
-#ifndef strncasecmp
+#ifdef WIN32
 #define strncasecmp(a, b, c) stricmp(a, b)
 #endif
 
