@@ -22,6 +22,10 @@
  * The author's email address is steve.sharples@nottingham.ac.uk
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "vxi11_user.h"
 #define BUF_LEN 100000
 

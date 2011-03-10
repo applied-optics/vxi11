@@ -23,6 +23,12 @@
  */
 
 #include "vxi11_user.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <rpc/rpc.h>
+#include "vxi11.h"
 
 /***************************************************************************** 
  * GENERAL NOTES
@@ -47,6 +53,15 @@
  * double vxi11_obtain_double_value(CLINK *clink, char *cmd, unsigned long timeout)
  */
 
+
+#define	VXI11_CLIENT		CLIENT
+#define	VXI11_LINK		Create_LinkResp
+#define	VXI11_MAX_CLIENTS	256	/* maximum no of unique IP addresses/clients */
+#define	VXI11_NULL_READ_RESP	50	/* vxi11_receive() return value if a query
+					 * times out ON THE INSTRUMENT (and so we have
+					 * to resend the query again) */
+#define	VXI11_NULL_WRITE_RESP	51	/* vxi11_send() return value if a sent command
+					 * times out ON THE INSTURMENT. */
 
 struct _CLINK {
 	VXI11_CLIENT *client;
