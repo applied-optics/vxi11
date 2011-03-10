@@ -277,8 +277,69 @@ char	*send_cmd;
 /* RECEIVE FUNCTIONS *
  * ================= */
 
+#define RCV_END_BIT	0x04	// An end indicator has been read
+#define RCV_CHR_BIT	0x02	// A termchr is set in flags and a character which matches termChar is transferred
+#define RCV_REQCNT_BIT	0x01	// requestSize bytes have been transferred.  This includes a request size of zero.
+
 long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout) {
-	return vxi11_receive(clink->client, clink->link, buffer, len, timeout);
+Device_ReadParms read_parms;
+Device_ReadResp  read_resp;
+unsigned long	curr_pos = 0;
+
+	read_parms.lid			= clink->link->lid;
+	read_parms.requestSize		= len;
+	read_parms.io_timeout		= timeout;	/* in ms */
+	read_parms.lock_timeout		= timeout;	/* in ms */
+	read_parms.flags		= 0;
+	read_parms.termChar		= 0;
+
+	do {
+                memset(&read_resp, 0, sizeof(read_resp));
+
+		read_resp.data.data_val = buffer + curr_pos;
+		read_parms.requestSize = len    - curr_pos;	// Never request more total data than originally specified in len
+
+		if(device_read_1(&read_parms, &read_resp, clink->client) != RPC_SUCCESS) {
+			return -VXI11_NULL_READ_RESP; /* there is nothing to read. Usually occurs after sending a query
+							 which times out on the instrument. If we don't check this first,
+							 then the following line causes a seg fault */
+			}
+ 		if (read_resp.error != 0) {
+			/* Read failed for reason specified in error code.
+			*  (From published VXI-11 protocol, section B.5.2)
+			*  0	no error
+			*  1	syntax error
+			*  3	device not accessible
+			*  4	invalid link identifier
+			*  5	parameter error
+			*  6	channel not established
+			*  8	operation not supported
+			*  9	out of resources
+			*  11	device locked by another link
+			*  12	no lock held by this link
+			*  15	I/O timeout
+			*  17	I/O error
+			*  21	invalid address
+			*  23	abort
+			*  29	channel already established
+			*/
+
+			printf("vxi11_user: read error: %d\n", (int)read_resp.error);
+			return -(read_resp.error);
+			}
+
+		if((curr_pos + read_resp.data.data_len) <= len) {
+			curr_pos += read_resp.data.data_len;
+			}
+		if( (read_resp.reason & RCV_END_BIT) || (read_resp.reason & RCV_CHR_BIT) ) {
+			break;
+			}
+		else if( curr_pos == len ) {
+			printf("xvi11_user: read error: buffer too small. Read %d bytes without hitting terminator.\n", (int)curr_pos );
+			return -100;
+			}
+		} while(1);
+	return (curr_pos); /*actual number of bytes received*/
 	}
 
 
@@ -487,69 +548,6 @@ Device_Error dev_error;
 // It appeared that this function wasn't correctly dealing with more data available than specified in len.
 // This patch attempts to fix this issue.	RDP 2007/8/13
 
-#define RCV_END_BIT	0x04	// An end indicator has been read
-#define RCV_CHR_BIT	0x02	// A termchr is set in flags and a character which matches termChar is transferred
-#define RCV_REQCNT_BIT	0x01	// requestSize bytes have been transferred.  This includes a request size of zero.
-
 long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len, unsigned long timeout) {
-Device_ReadParms read_parms;
-Device_ReadResp  read_resp;
-unsigned long	curr_pos = 0;
-
-	read_parms.lid			= link->lid;
-	read_parms.requestSize		= len;
-	read_parms.io_timeout		= timeout;	/* in ms */
-	read_parms.lock_timeout		= timeout;	/* in ms */
-	read_parms.flags		= 0;
-	read_parms.termChar		= 0;
-
-	do {
-                memset(&read_resp, 0, sizeof(read_resp));
-
-		read_resp.data.data_val = buffer + curr_pos;
-		read_parms.requestSize = len    - curr_pos;	// Never request more total data than originally specified in len
-
-		if(device_read_1(&read_parms, &read_resp, client) != RPC_SUCCESS) {
-			return -VXI11_NULL_READ_RESP; /* there is nothing to read. Usually occurs after sending a query
-							 which times out on the instrument. If we don't check this first,
-							 then the following line causes a seg fault */
-			}
- 		if (read_resp.error != 0) {
-			/* Read failed for reason specified in error code.
-			*  (From published VXI-11 protocol, section B.5.2)
-			*  0	no error
-			*  1	syntax error
-			*  3	device not accessible
-			*  4	invalid link identifier
-			*  5	parameter error
-			*  6	channel not established
-			*  8	operation not supported
-			*  9	out of resources
-			*  11	device locked by another link
-			*  12	no lock held by this link
-			*  15	I/O timeout
-			*  17	I/O error
-			*  21	invalid address
-			*  23	abort
-			*  29	channel already established
-			*/
-
-			printf("vxi11_user: read error: %d\n", (int)read_resp.error);
-			return -(read_resp.error);
-			}
-
-		if((curr_pos + read_resp.data.data_len) <= len) {
-			curr_pos += read_resp.data.data_len;
-			}
-		if( (read_resp.reason & RCV_END_BIT) || (read_resp.reason & RCV_CHR_BIT) ) {
-			break;
-			}
-		else if( curr_pos == len ) {
-			printf("xvi11_user: read error: buffer too small. Read %d bytes without hitting terminator.\n", (int)curr_pos );
-			return -100;
-			}
-		} while(1);
-	return (curr_pos); /*actual number of bytes received*/
-
 	}
 
