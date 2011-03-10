@@ -42,15 +42,11 @@
 #define	VXI11_NULL_WRITE_RESP	51	/* vxi11_send() return value if a sent command
 					 * times out ON THE INSTURMENT. */
 
-struct	CLINK {
-	VXI11_CLIENT	*client;
-	VXI11_LINK	*link;
-	} ;
-typedef	struct	CLINK CLINK;
+typedef	struct _CLINK CLINK;
 
 /* The four main functions: open, close, send, receieve (plus a couple of wrappers) */
-int	vxi11_open_device(const char *ip, CLINK *clink);
-int	vxi11_open_device(const char *ip, CLINK *clink, char *device);
+CLINK *vxi11_open_device(const char *ip);
+CLINK *vxi11_open_device(const char *ip, char *device);
 int	vxi11_close_device(const char *ip, CLINK *clink);
 int	vxi11_send(CLINK *clink, const char *cmd);
 int	vxi11_send(CLINK *clink, const char *cmd, unsigned long len);

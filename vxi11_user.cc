@@ -30,7 +30,7 @@
  *
  * There are four functions at the heart of this library:
  *
- * int	vxi11_open_device(char *ip, CLINK *clink)
+ * CLINK *vxi11_open_device(char *ip, char *device)
  * int	vxi11_close_device(char *ip, CLINK *clink)
  * int	vxi11_send(CLINK *clink, char *cmd, unsigned long len)
  *    --- or --- (if sending just text)
@@ -57,6 +57,12 @@
  *   initialisation procedures, depending on whether it's an instrument
  *   with the same IP address or not
  */
+
+struct _CLINK {
+	VXI11_CLIENT *client;
+	VXI11_LINK *link;
+} ;
+
 char	VXI11_IP_ADDRESS[VXI11_MAX_CLIENTS][20];
 CLIENT	*VXI11_CLIENT_ADDRESS[VXI11_MAX_CLIENTS];
 int	VXI11_DEVICE_NO = 0;
@@ -75,10 +81,14 @@ static int  _vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link);
 
 /* Use this function from user land to open a device and create a link. Can be
  * used multiple times for the same device (the library will keep track).*/
-int	vxi11_open_device(const char *ip, CLINK *clink, char *device) {
+CLINK *vxi11_open_device(const char *ip, char *device) {
 int	ret;
 int	l;
 int	device_no=-1;
+CLINK *clink;
+
+	clink = (CLINK *)calloc(1, sizeof(CLINK ));
+	if(!clink) return NULL;
 
 //	printf("before doing anything, clink->link = %ld\n", clink->link);
 	/* Have a look to see if we've already initialised an instrument with
@@ -106,12 +116,12 @@ int	device_no=-1;
 			clink->client = clnt_create(ip, DEVICE_CORE, DEVICE_CORE_VERSION, "tcp");
 			if(!clink->client){
 				clnt_pcreateerror(ip);
-				return -1;
+				return NULL;
 			}
 
 			ret = _vxi11_open_link(ip, &clink->client, &clink->link, device);
 			if(ret != 0){
-				return ret;
+				return NULL;
 			}
 			strncpy(VXI11_IP_ADDRESS[VXI11_DEVICE_NO],ip,20);
 			VXI11_CLIENT_ADDRESS[VXI11_DEVICE_NO] = clink->client;
@@ -135,7 +145,7 @@ int	device_no=-1;
 //		printf("Have just incremented VXI11_LINK_COUNT[%d], it's now %d\n",device_no,VXI11_LINK_COUNT[device_no]);
 		}
 //	printf("after creating link, clink->link = %ld\n", clink->link);
-	return ret;
+	return clink;
 	}
 
 /* This is a wrapper function, used for the situations where there is only one
@@ -145,10 +155,10 @@ int	device_no=-1;
  * (devices). In order to differentiate between them, we need to pass a device
  * name. This gets used in the _vxi11_open_link() fn, as the link_parms.device
  * value. */
-int	vxi11_open_device(const char *ip, CLINK *clink) {
+CLINK *vxi11_open_device(const char *ip) {
 	char device[6];
 	strncpy(device,"inst0",6);
-	return vxi11_open_device(ip, clink, device);
+	return vxi11_open_device(ip, device);
 	}
 
 
@@ -190,6 +200,7 @@ int     device_no = -1;
 			memset(VXI11_IP_ADDRESS[device_no], 0, 20);
 			}
 		}
+	free(clink);
 	return ret;
 	}
 

@@ -35,8 +35,6 @@ int		ret;
 long		bytes_returned;
 CLINK		*clink;
 
-	clink = new CLINK;
-
 	if (argc < 2) {
 		printf("usage: %s your.inst.ip.addr [device_name]\n",argv[0]);
 		exit(1);
@@ -45,13 +43,13 @@ CLINK		*clink;
 	device_ip = argv[1];
 	if (argc > 2) {
 		device_name = argv[2];
-		ret=vxi11_open_device(device_ip,clink,device_name);
+		clink = vxi11_open_device(device_ip, device_name);
 		}
 	else {
-		ret=vxi11_open_device(device_ip,clink);
+		clink = vxi11_open_device(device_ip);
 		}
 
-	if (ret != 0) {
+	if (!clink){
 		printf("Error: could not open device %s, quitting\n",device_ip);
 		exit(2);
 		}
