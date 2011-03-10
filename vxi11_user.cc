@@ -123,7 +123,16 @@ int	device_no=-1;
 		 * must be link number 1. Keep track of how many devices we've
 		 * opened so we don't run out of storage space. */
 		else {
-			ret = vxi11_open_device(ip, &(clink->client), &(clink->link), device);
+			clink->client = clnt_create(ip, DEVICE_CORE, DEVICE_CORE_VERSION, "tcp");
+			if(!clink->client){
+				clnt_pcreateerror(ip);
+				return -1;
+			}
+
+			ret = vxi11_open_link(ip, &clink->client, &clink->link, device);
+			if(ret != 0){
+				return ret;
+			}
 			strncpy(VXI11_IP_ADDRESS[VXI11_DEVICE_NO],ip,20);
 			VXI11_CLIENT_ADDRESS[VXI11_DEVICE_NO] = clink->client;
 			VXI11_LINK_COUNT[VXI11_DEVICE_NO]=1;
@@ -485,17 +494,6 @@ double	val;
 
 /* OPEN FUNCTIONS *
  * ============== */
-int	vxi11_open_device(const char *ip, CLIENT **client, VXI11_LINK **link, char *device) {
-
-	*client = clnt_create(ip, DEVICE_CORE, DEVICE_CORE_VERSION, "tcp");
-
-	if (*client == NULL) {
-		clnt_pcreateerror(ip);
-		return -1;
-		}
-
-	return vxi11_open_link(ip, client, link, device);
-	}
 
 int	vxi11_open_link(const char *ip, CLIENT **client, VXI11_LINK **link, char *device) {
 
