@@ -531,13 +531,3 @@ Device_Error dev_error;
 	return 0;
 	}
 
-
-/* RECEIVE FUNCTIONS *
- * ================= */
-
-// It appeared that this function wasn't correctly dealing with more data available than specified in len.
-// This patch attempts to fix this issue.	RDP 2007/8/13
-
-long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len, unsigned long timeout) {
-	}
-
