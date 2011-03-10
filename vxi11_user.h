@@ -68,11 +68,4 @@ long	vxi11_send_and_receive(CLINK *clink, const char *cmd, char *buf, unsigned l
 long	vxi11_obtain_long_value(CLINK *clink, const char *cmd, unsigned long timeout=VXI11_READ_TIMEOUT);
 double	vxi11_obtain_double_value(CLINK *clink, const char *cmd, unsigned long timeout=VXI11_READ_TIMEOUT);
 
-/* When I first wrote this library I used separate client and links. I've
- * retained the original functions and just written clink wrappers for them
- * (see above) as it's perhaps a little clearer this way. Probably not worth
- * delving this deep in use, but it's where the real nitty gritty is. */
-int	vxi11_open_link(const char *ip, CLIENT **client, VXI11_LINK **link, char *device);
-int	vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link);
-
 #endif

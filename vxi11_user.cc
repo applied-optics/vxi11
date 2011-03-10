@@ -86,6 +86,10 @@ CLIENT	*VXI11_CLIENT_ADDRESS[VXI11_MAX_CLIENTS];
 int	VXI11_DEVICE_NO = 0;
 int	VXI11_LINK_COUNT[VXI11_MAX_CLIENTS];
 
+
+static int _vxi11_open_link(const char *ip, CLIENT **client, VXI11_LINK **link, char *device);
+static int  _vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link);
+
 /*****************************************************************************
  * KEY USER FUNCTIONS - USE THESE FROM YOUR PROGRAMS OR INSTRUMENT LIBRARIES *
  *****************************************************************************/
@@ -129,7 +133,7 @@ int	device_no=-1;
 				return -1;
 			}
 
-			ret = vxi11_open_link(ip, &clink->client, &clink->link, device);
+			ret = _vxi11_open_link(ip, &clink->client, &clink->link, device);
 			if(ret != 0){
 				return ret;
 			}
@@ -149,7 +153,7 @@ int	device_no=-1;
 		/* Copy the client pointer address. Just establish a new link
 		 * (not a new client). Add one to the link count */
 		clink->client = VXI11_CLIENT_ADDRESS[device_no];
-		ret = vxi11_open_link(ip, &(clink->client), &(clink->link), device);
+		ret = _vxi11_open_link(ip, &(clink->client), &(clink->link), device);
 //		printf("Found an ip address, copying client from VXI11_CLIENT_ADDRESS[%d]\n",device_no);
 		VXI11_LINK_COUNT[device_no]++;
 //		printf("Have just incremented VXI11_LINK_COUNT[%d], it's now %d\n",device_no,VXI11_LINK_COUNT[device_no]);
@@ -163,7 +167,7 @@ int	device_no=-1;
  * instruments; however, it is _not_ the case for devices such as LAN to GPIB
  * gateways. These are single clients that communicate to many instruments
  * (devices). In order to differentiate between them, we need to pass a device
- * name. This gets used in the vxi11_open_link() fn, as the link_parms.device
+ * name. This gets used in the _vxi11_open_link() fn, as the link_parms.device
  * value. */
 int	vxi11_open_device(const char *ip, CLINK *clink) {
 	char device[6];
@@ -197,13 +201,13 @@ int     device_no = -1;
 	else {	/* Found the IP, there's more than one link to that instrument,
 		 * so keep track and just close the link */
 		if (VXI11_LINK_COUNT[device_no] > 1 ) {
-			ret = vxi11_close_link(ip,clink->client, clink->link);
+			ret = _vxi11_close_link(ip,clink->client, clink->link);
 			VXI11_LINK_COUNT[device_no]--;
 			}
 		/* Found the IP, it's the last link, so close the device (link
 		 * AND client) */
 		else {
-			ret = vxi11_close_link(ip, clink->client, clink->link);
+			ret = _vxi11_close_link(ip, clink->client, clink->link);
 			clnt_destroy(clink->client);
 			/* Remove the IP address, so that if we re-open the same device
 			 * we do it properly */
@@ -496,7 +500,7 @@ double	val;
 /* OPEN FUNCTIONS *
  * ============== */
 
-int	vxi11_open_link(const char *ip, CLIENT **client, VXI11_LINK **link, char *device) {
+static int _vxi11_open_link(const char *ip, CLIENT **client, VXI11_LINK **link, char *device) {
 
 Create_LinkParms link_parms;
 
@@ -519,7 +523,7 @@ Create_LinkParms link_parms;
 /* CLOSE FUNCTIONS *
  * =============== */
 
-int	vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link) {
+static int _vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link) {
 Device_Error dev_error;
 	memset(&dev_error, 0, sizeof(dev_error)); 
 
