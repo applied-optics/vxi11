@@ -48,6 +48,11 @@
  */
 
 
+struct _CLINK {
+	VXI11_CLIENT *client;
+	VXI11_LINK *link;
+} ;
+
 /* Global variables. Keep track of multiple links per client. We need this
  * because:
  * - we'd like the library to be able to cope with multiple links to a given
@@ -58,15 +63,14 @@
  *   with the same IP address or not
  */
 
-struct _CLINK {
-	VXI11_CLIENT *client;
-	VXI11_LINK *link;
-} ;
+struct _vxi11_client_t {
+	struct _vxi11_client_t *next;
+	char ip_address[20];
+	CLIENT *client_address;
+	int link_count;
+};
 
-char	VXI11_IP_ADDRESS[VXI11_MAX_CLIENTS][20];
-CLIENT	*VXI11_CLIENT_ADDRESS[VXI11_MAX_CLIENTS];
-int	VXI11_DEVICE_NO = 0;
-int	VXI11_LINK_COUNT[VXI11_MAX_CLIENTS];
+static struct _vxi11_client_t *VXI11_CLIENTS = NULL;
 
 /* Internal function declarations. */
 static int _vxi11_open_link(const char *ip, CLINK *clink, char *device);
@@ -83,9 +87,9 @@ static int  _vxi11_close_link(const char *ip, CLINK *clink);
  * used multiple times for the same device (the library will keep track).*/
 CLINK *vxi11_open_device(const char *ip, char *device) {
 int	ret;
-int	l;
-int	device_no=-1;
+struct _vxi11_client_t *tail, *client = NULL;
 CLINK *clink;
+
 
 	clink = (CLINK *)calloc(1, sizeof(CLINK ));
 	if(!clink) return NULL;
@@ -93,57 +97,50 @@ CLINK *clink;
 //	printf("before doing anything, clink->link = %ld\n", clink->link);
 	/* Have a look to see if we've already initialised an instrument with
 	 * this IP address */
-	for (l=0; l<VXI11_MAX_CLIENTS; l++){
-		if (strcmp(ip,VXI11_IP_ADDRESS[l]) == 0 ) {
-			device_no=l;
-//			printf("Open function, search, found ip address %s, device no %d\n",ip,device_no);
-			}
+	tail = VXI11_CLIENTS;
+	while(tail){
+		if (strcmp(ip, tail->ip_address) == 0 ) {
+			client = tail;
+			break;
 		}
+		tail = tail->next;
+	}
 
 	/* Couldn't find a match, must be a new IP address */
-	if (device_no < 0) {
-		/* Uh-oh, we're out of storage space. Increase the #define
-		 * for VXI11_MAX_CLIENTS in vxi11_user.h */
-		if (VXI11_DEVICE_NO >= VXI11_MAX_CLIENTS) {
-			printf("Error: maximum of %d clients allowed\n",VXI11_MAX_CLIENTS);
-			ret = -VXI11_MAX_CLIENTS;
-			}
-		/* Create a new client, keep a note of where the client pointer
+	if (!client){
+        /* Create a new client, keep a note of where the client pointer
 		 * is, for this IP address. Because it's a new client, this
 		 * must be link number 1. Keep track of how many devices we've
 		 * opened so we don't run out of storage space. */
-		else {
-			clink->client = clnt_create(ip, DEVICE_CORE, DEVICE_CORE_VERSION, "tcp");
-			if(!clink->client){
-				clnt_pcreateerror(ip);
-				return NULL;
-			}
+		client = (struct _vxi11_client_t *)calloc(1, sizeof(struct _vxi11_client_t));
+		if(!client) return NULL;
 
-			ret = _vxi11_open_link(ip, clink, device);
-			if(ret != 0){
-				return NULL;
-			}
-			strncpy(VXI11_IP_ADDRESS[VXI11_DEVICE_NO],ip,20);
-			VXI11_CLIENT_ADDRESS[VXI11_DEVICE_NO] = clink->client;
-			VXI11_LINK_COUNT[VXI11_DEVICE_NO]=1;
-//			printf("Open function, could not find ip address %s.\n",ip);
-//			printf("So now, VXI11_IP_ADDRESS[%d]=%s,\n",VXI11_DEVICE_NO,VXI11_IP_ADDRESS[VXI11_DEVICE_NO]);
-//			printf("VXI11_CLIENT_ADDRESS[%d]=%ld,\n",VXI11_DEVICE_NO,VXI11_CLIENT_ADDRESS[VXI11_DEVICE_NO]);
-//			printf("          clink->client=%ld,\n",clink->client);
-//			printf("VXI11_LINK_COUNT[%d]=%d.\n",VXI11_DEVICE_NO,VXI11_LINK_COUNT[VXI11_DEVICE_NO]);
-			VXI11_DEVICE_NO++;
-			}
+		clink->client = clnt_create(ip, DEVICE_CORE, DEVICE_CORE_VERSION, "tcp");
+
+		if(clink->client == NULL) {
+			clnt_pcreateerror(ip);
+			return NULL;
 		}
-	/* already got a client for this IP address */
-	else {
-		/* Copy the client pointer address. Just establish a new link
-		 * (not a new client). Add one to the link count */
-		clink->client = VXI11_CLIENT_ADDRESS[device_no];
 		ret = _vxi11_open_link(ip, clink, device);
-//		printf("Found an ip address, copying client from VXI11_CLIENT_ADDRESS[%d]\n",device_no);
-		VXI11_LINK_COUNT[device_no]++;
-//		printf("Have just incremented VXI11_LINK_COUNT[%d], it's now %d\n",device_no,VXI11_LINK_COUNT[device_no]);
+		if(ret != 0){
+			clnt_destroy(clink->client);
+			free(clink);
+			return NULL;
 		}
+
+		strncpy(client->ip_address, ip, 20);
+		client->client_address = clink->client;
+		client->link_count = 1;
+		client->next = VXI11_CLIENTS;
+		VXI11_CLIENTS = client;
+	} else {
+        /* Copy the client pointer address. Just establish a new link
+		 *  not a new client). Add one to the link count */
+		clink->client = client->client_address;
+		ret = _vxi11_open_link(ip, clink, device);
+		client->link_count++;
+	}
+
 //	printf("after creating link, clink->link = %ld\n", clink->link);
 	return clink;
 	}
@@ -169,37 +166,45 @@ CLINK *vxi11_open_device(const char *ip) {
 /* Use this function from user land to close a device and/or sever a link. Can
  * be used multiple times for the same device (the library will keep track).*/
 int     vxi11_close_device(const char *ip, CLINK *clink) {
-int     l,ret;
-int     device_no = -1;
+int     ret;
+struct _vxi11_client_t *tail, *last = NULL, *client = NULL;
 
 	/* Which instrument are we referring to? */
-	for (l=0; l<VXI11_MAX_CLIENTS; l++){
-		if (strcmp(ip,VXI11_IP_ADDRESS[l]) == 0 ) {
-			device_no=l;
-			}
+	tail = VXI11_CLIENTS;
+	while(tail){
+		if (strncmp(ip, tail->ip_address, 20) == 0 ) {
+			client = tail;
+			break;
 		}
+		last = tail;
+		tail = tail->next;
+	}
+
 	/* Something's up if we can't find the IP address! */
-	if (device_no == -1) {
+	if (!client){
 		printf("vxi11_close_device: error: I have no record of you ever opening device\n");
 		printf("                    with IP address %s\n",ip);
 		ret = -4;
-		}
-	else {	/* Found the IP, there's more than one link to that instrument,
-		 * so keep track and just close the link */
-		if (VXI11_LINK_COUNT[device_no] > 1 ) {
+	} else {	/* Found the IP, there's more than one link to that instrument,
+			 * so keep track and just close the link */
+		if (client->link_count > 1 ) {
 			ret = _vxi11_close_link(ip, clink);
-			VXI11_LINK_COUNT[device_no]--;
+			client->link_count--;
 			}
 		/* Found the IP, it's the last link, so close the device (link
 		 * AND client) */
 		else {
 			ret = _vxi11_close_link(ip, clink);
 			clnt_destroy(clink->client);
-			/* Remove the IP address, so that if we re-open the same device
-			 * we do it properly */
-			memset(VXI11_IP_ADDRESS[device_no], 0, 20);
+
+			if(last){
+				last->next = client->next;
+			}else{
+				VXI11_CLIENTS = client->next;
 			}
+			free(client);
 		}
+	}
 	free(clink);
 	return ret;
 	}
