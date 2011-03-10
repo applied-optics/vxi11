@@ -30,27 +30,6 @@
  *
  * There are four functions at the heart of this library:
  *
- * int	vxi11_open_device(char *ip, CLIENT **client, VXI11_LINK **link)
- * int	vxi11_close_device(char *ip, CLIENT *client, VXI11_LINK *link)
- * int	vxi11_send(CLIENT *client, VXI11_LINK *link, char *cmd, unsigned long len)
- * long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len, unsigned long timeout)
- *
- * Note that all 4 of these use separate client and link structures. All the
- * other functions are built on these four core functions, and the first layer
- * of abstraction is to combine the CLIENT and VXI11_LINK structures into a
- * single entity, which I've called a CLINK. For the send and receive
- * functions, this is just a simple wrapper. For the open and close functions
- * it's a bit more complicated, because we somehow have to keep track of
- * whether we've already opened a device with the same IP address before (in
- * which case we need to recycle a previously created client), or whether
- * we've still got any other links to a given IP address left when we are 
- * asked to close a clink (in which case we can sever the link, but have to
- * keep the client open). This is so the person using this library from
- * userland does not have to keep track of whether they are talking to a
- * different physical instrument or not each time they establish a connection.
- *
- * So the base functions that the user will probably want to use are:
- *
  * int	vxi11_open_device(char *ip, CLINK *clink)
  * int	vxi11_close_device(char *ip, CLINK *clink)
  * int	vxi11_send(CLINK *clink, char *cmd, unsigned long len)
@@ -66,9 +45,6 @@
  * long	vxi11_send_and_receive(CLINK *clink, char *cmd, char *buf, unsigned long buf_len, unsigned long timeout)
  * long	vxi11_obtain_long_value(CLINK *clink, char *cmd, unsigned long timeout)
  * double vxi11_obtain_double_value(CLINK *clink, char *cmd, unsigned long timeout)
- *
- * (then there are some shorthand wrappers for the above without specifying
- * the timeout due to sheer laziness---explore yourself)
  */
 
 
@@ -86,7 +62,7 @@ CLIENT	*VXI11_CLIENT_ADDRESS[VXI11_MAX_CLIENTS];
 int	VXI11_DEVICE_NO = 0;
 int	VXI11_LINK_COUNT[VXI11_MAX_CLIENTS];
 
-
+/* Internal function declarations. */
 static int _vxi11_open_link(const char *ip, CLIENT **client, VXI11_LINK **link, char *device);
 static int  _vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link);
 

@@ -49,11 +49,6 @@ struct	CLINK {
 typedef	struct	CLINK CLINK;
 
 /* The four main functions: open, close, send, receieve (plus a couple of wrappers) */
-/* In fact all 6 of these are wrappers to the original functions listed at the
- * bottom, that use separate CLIENT and VXI11_LINK structures. It was easier to 
- * write wrappers for these functions than to re-write the original functions
- * themselves. These are the 4 (or 6 if you like) key user functions that you
- * should probably be using. They all use the CLINK structure. */
 int	vxi11_open_device(const char *ip, CLINK *clink);
 int	vxi11_open_device(const char *ip, CLINK *clink, char *device);
 int	vxi11_close_device(const char *ip, CLINK *clink);
