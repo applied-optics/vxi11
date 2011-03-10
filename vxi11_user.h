@@ -63,10 +63,10 @@ long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long 
 
 /* Utility functions, that use send() and receive(). Use these too. */
 int	vxi11_send_data_block(CLINK *clink, const char *cmd, char *buffer, unsigned long len);
-long	vxi11_receive_data_block(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout);
-long	vxi11_send_and_receive(CLINK *clink, const char *cmd, char *buf, unsigned long buf_len, unsigned long timeout);
-long	vxi11_obtain_long_value(CLINK *clink, const char *cmd, unsigned long timeout);
-double	vxi11_obtain_double_value(CLINK *clink, const char *cmd, unsigned long timeout);
+long	vxi11_receive_data_block(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout=VXI11_DEFAULT_TIMEOUT);
+long	vxi11_send_and_receive(CLINK *clink, const char *cmd, char *buf, unsigned long buf_len, unsigned long timeout=VXI11_DEFAULT_TIMEOUT);
+long	vxi11_obtain_long_value(CLINK *clink, const char *cmd, unsigned long timeout=VXI11_DEFAULT_TIMEOUT);
+double	vxi11_obtain_double_value(CLINK *clink, const char *cmd, unsigned long timeout=VXI11_DEFAULT_TIMEOUT);
 long	vxi11_obtain_long_value(CLINK *clink, const char *cmd);
 double	vxi11_obtain_double_value(CLINK *link, const char *cmd);
 
