@@ -116,11 +116,15 @@ CLINK *clink = NULL;
 #else
 int	ret;
 struct _vxi11_client_t *tail, *client = NULL;
-
+#endif
 
 	clink = (CLINK *)calloc(1, sizeof(CLINK ));
 	if(!clink) return NULL;
 
+#ifdef WIN32
+	viOpenDefaultRM(&clink->rm);
+	viOpen(clink->rm, device, VI_NULL, VI_NULL, &clink->session);
+#else
 //	printf("before doing anything, clink->link = %ld\n", clink->link);
 	/* Have a look to see if we've already initialised an instrument with
 	 * this address */
@@ -195,6 +199,8 @@ CLINK *vxi11_open_device(const char *address) {
 int     vxi11_close_device(const char *address, CLINK *clink) {
 int     ret = 0;
 #ifdef WIN32
+	viClose(clink->session);
+	viClose(clink->rm);
 #else
 struct _vxi11_client_t *tail, *last = NULL, *client = NULL;
 
