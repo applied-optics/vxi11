@@ -113,6 +113,8 @@ static int  _vxi11_close_link(const char *address, CLINK *clink);
 CLINK *vxi11_open_device(const char *address, char *device) {
 CLINK *clink = NULL;
 #ifdef WIN32
+	ViStatus status;
+	char buf[256];
 #else
 int	ret;
 struct _vxi11_client_t *tail, *client = NULL;
@@ -122,8 +124,16 @@ struct _vxi11_client_t *tail, *client = NULL;
 	if(!clink) return NULL;
 
 #ifdef WIN32
-	viOpenDefaultRM(&clink->rm);
-	viOpen(clink->rm, device, VI_NULL, VI_NULL, &clink->session);
+	status = viOpenDefaultRM(&clink->rm);
+	if(status != VI_SUCCESS){
+		viStatusDesc(NULL, status, buf);
+		printf("%s\n", buf);
+	}
+	viOpen(clink->rm, (char *)address, VI_NULL, VI_NULL, &clink->session);
+	if(status != VI_SUCCESS){
+		viStatusDesc(clink->rm, status, buf);
+		printf("%s\n", buf);
+	}
 #else
 //	printf("before doing anything, clink->link = %ld\n", clink->link);
 	/* Have a look to see if we've already initialised an instrument with
@@ -259,6 +269,8 @@ int	vxi11_send(CLINK *clink, const char *cmd) {
  * though, for when we are sending fixed length data blocks. */
 int	vxi11_send(CLINK *clink, const char *cmd, unsigned long len) {
 #ifdef WIN32
+	ViStatus status;
+	char buf[256];
 #else
 Device_WriteParms write_parms;
 #endif
@@ -271,11 +283,14 @@ unsigned char	*send_cmd;
 
 #ifdef WIN32
 	while(bytes_left > 0){
-		if(viWrite(clink->session, send_cmd + (len - bytes_left), bytes_left, &write_count) == VI_SUCCESS){
+		status = viWrite(clink->session, send_cmd + (len - bytes_left), bytes_left, &write_count);
+		if(status == VI_SUCCESS){
 			bytes_left -= write_count;
 		}else{
 			delete[] send_cmd;
-			return 1;
+			viStatusDesc(clink->session, status, buf);
+			printf("%s\n", buf);
+			return status;
 		}
 	}
 #else
