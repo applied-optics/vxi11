@@ -69,7 +69,7 @@ int	VXI11_DEVICE_NO = 0;
 int	VXI11_LINK_COUNT[VXI11_MAX_CLIENTS];
 
 /* Internal function declarations. */
-static int _vxi11_open_link(const char *ip, CLIENT **client, VXI11_LINK **link, char *device);
+static int _vxi11_open_link(const char *ip, CLINK *clink, char *device);
 static int  _vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link);
 
 /*****************************************************************************
@@ -119,7 +119,7 @@ CLINK *clink;
 				return NULL;
 			}
 
-			ret = _vxi11_open_link(ip, &clink->client, &clink->link, device);
+			ret = _vxi11_open_link(ip, clink, device);
 			if(ret != 0){
 				return NULL;
 			}
@@ -139,7 +139,7 @@ CLINK *clink;
 		/* Copy the client pointer address. Just establish a new link
 		 * (not a new client). Add one to the link count */
 		clink->client = VXI11_CLIENT_ADDRESS[device_no];
-		ret = _vxi11_open_link(ip, &(clink->client), &(clink->link), device);
+		ret = _vxi11_open_link(ip, clink, device);
 //		printf("Found an ip address, copying client from VXI11_CLIENT_ADDRESS[%d]\n",device_no);
 		VXI11_LINK_COUNT[device_no]++;
 //		printf("Have just incremented VXI11_LINK_COUNT[%d], it's now %d\n",device_no,VXI11_LINK_COUNT[device_no]);
@@ -487,20 +487,20 @@ double	val;
 /* OPEN FUNCTIONS *
  * ============== */
 
-static int _vxi11_open_link(const char *ip, CLIENT **client, VXI11_LINK **link, char *device) {
+static int _vxi11_open_link(const char *ip, CLINK *clink, char *device) {
 
 Create_LinkParms link_parms;
 
 	/* Set link parameters */
-	link_parms.clientId	= (long) *client;
+	link_parms.clientId	= (long) clink->client;
 	link_parms.lockDevice	= 0;
 	link_parms.lock_timeout	= VXI11_DEFAULT_TIMEOUT;
 	link_parms.device	= device;
 
-	*link = (Create_LinkResp *) calloc(1, sizeof(Create_LinkResp));
+	clink->link = (Create_LinkResp *) calloc(1, sizeof(Create_LinkResp));
 
-	if (create_link_1(&link_parms, *link, *client) != RPC_SUCCESS) {
-		clnt_perror(*client, ip);
+	if (create_link_1(&link_parms, clink->link, clink->client) != RPC_SUCCESS) {
+		clnt_perror(clink->client, ip);
 		return -2;
 		}
 	return 0;
