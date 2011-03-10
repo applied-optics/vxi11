@@ -40,7 +40,7 @@ clean:
 install: all
 	$(INSTALL) vxi11_cmd $(DESTDIR)$(prefix)/bin/
 	$(INSTALL) libvxi11.so.0 $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/
-	ln -s libvxi11.so.0 $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/libvxi11.so
+	ln -sf libvxi11.so.0 $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/libvxi11.so
 	$(INSTALL) vxi11.h vxi11_user.h $(DESTDIR)$(prefix)/include/
 
 dist : distclean
