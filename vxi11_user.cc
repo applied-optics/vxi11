@@ -341,6 +341,7 @@ unsigned char	*send_cmd;
 long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout) {
 unsigned long	curr_pos = 0;
 #ifdef WIN32
+	viRead(clink->session, (unsigned char *)buffer, len, &curr_pos);
 #else
 Device_ReadParms read_parms;
 Device_ReadResp  read_resp;
