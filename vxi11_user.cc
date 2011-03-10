@@ -40,8 +40,8 @@
  *
  * There are four functions at the heart of this library:
  *
- * CLINK *vxi11_open_device(char *ip, char *device)
- * int	vxi11_close_device(char *ip, CLINK *clink)
+ * CLINK *vxi11_open_device(char *address, char *device)
+ * int	vxi11_close_device(char *address, CLINK *clink)
  * int	vxi11_send(CLINK *clink, char *cmd, unsigned long len)
  *    --- or --- (if sending just text)
  * int	vxi11_send(CLINK *clink, char *cmd)
@@ -60,7 +60,7 @@
 
 #define	VXI11_CLIENT		CLIENT
 #define	VXI11_LINK		Create_LinkResp
-#define	VXI11_MAX_CLIENTS	256	/* maximum no of unique IP addresses/clients */
+#define	VXI11_MAX_CLIENTS	256	/* maximum no of unique addresses/clients */
 #define	VXI11_NULL_READ_RESP	50	/* vxi11_receive() return value if a query
 					 * times out ON THE INSTRUMENT (and so we have
 					 * to resend the query again) */
@@ -84,12 +84,12 @@ struct _CLINK {
  * - we'd like to just refer to a client/link ("clink") as a single
  *   entity from user land, we don't want to worry about different
  *   initialisation procedures, depending on whether it's an instrument
- *   with the same IP address or not
+ *   with the same address or not
  */
 
 struct _vxi11_client_t {
 	struct _vxi11_client_t *next;
-	char ip_address[20];
+	char address[20];
 #ifndef WIN32
 	CLIENT *client_address;
 #endif
@@ -99,8 +99,8 @@ struct _vxi11_client_t {
 static struct _vxi11_client_t *VXI11_CLIENTS = NULL;
 
 /* Internal function declarations. */
-static int _vxi11_open_link(const char *ip, CLINK *clink, char *device);
-static int  _vxi11_close_link(const char *ip, CLINK *clink);
+static int _vxi11_open_link(const char *address, CLINK *clink, char *device);
+static int  _vxi11_close_link(const char *address, CLINK *clink);
 
 /*****************************************************************************
  * KEY USER FUNCTIONS - USE THESE FROM YOUR PROGRAMS OR INSTRUMENT LIBRARIES *
@@ -111,7 +111,7 @@ static int  _vxi11_close_link(const char *ip, CLINK *clink);
 
 /* Use this function from user land to open a device and create a link. Can be
  * used multiple times for the same device (the library will keep track).*/
-CLINK *vxi11_open_device(const char *ip, char *device) {
+CLINK *vxi11_open_device(const char *address, char *device) {
 CLINK *clink = NULL;
 #ifdef WIN32
 #else
@@ -124,39 +124,39 @@ struct _vxi11_client_t *tail, *client = NULL;
 
 //	printf("before doing anything, clink->link = %ld\n", clink->link);
 	/* Have a look to see if we've already initialised an instrument with
-	 * this IP address */
+	 * this address */
 	tail = VXI11_CLIENTS;
 	while(tail){
-		if (strcmp(ip, tail->ip_address) == 0 ) {
+		if (strcmp(address, tail->address) == 0 ) {
 			client = tail;
 			break;
 		}
 		tail = tail->next;
 	}
 
-	/* Couldn't find a match, must be a new IP address */
+	/* Couldn't find a match, must be a new address */
 	if (!client){
         /* Create a new client, keep a note of where the client pointer
-		 * is, for this IP address. Because it's a new client, this
+		 * is, for this address. Because it's a new client, this
 		 * must be link number 1. Keep track of how many devices we've
 		 * opened so we don't run out of storage space. */
 		client = (struct _vxi11_client_t *)calloc(1, sizeof(struct _vxi11_client_t));
 		if(!client) return NULL;
 
-		clink->client = clnt_create(ip, DEVICE_CORE, DEVICE_CORE_VERSION, "tcp");
+		clink->client = clnt_create(address, DEVICE_CORE, DEVICE_CORE_VERSION, "tcp");
 
 		if(clink->client == NULL) {
-			clnt_pcreateerror(ip);
+			clnt_pcreateerror(address);
 			return NULL;
 		}
-		ret = _vxi11_open_link(ip, clink, device);
+		ret = _vxi11_open_link(address, clink, device);
 		if(ret != 0){
 			clnt_destroy(clink->client);
 			free(clink);
 			return NULL;
 		}
 
-		strncpy(client->ip_address, ip, 20);
+		strncpy(client->address, address, 20);
 		client->client_address = clink->client;
 		client->link_count = 1;
 		client->next = VXI11_CLIENTS;
@@ -165,7 +165,7 @@ struct _vxi11_client_t *tail, *client = NULL;
         /* Copy the client pointer address. Just establish a new link
 		 *  not a new client). Add one to the link count */
 		clink->client = client->client_address;
-		ret = _vxi11_open_link(ip, clink, device);
+		ret = _vxi11_open_link(address, clink, device);
 		client->link_count++;
 	}
 #endif
@@ -180,10 +180,10 @@ struct _vxi11_client_t *tail, *client = NULL;
  * (devices). In order to differentiate between them, we need to pass a device
  * name. This gets used in the _vxi11_open_link() fn, as the link_parms.device
  * value. */
-CLINK *vxi11_open_device(const char *ip) {
+CLINK *vxi11_open_device(const char *address) {
 	char device[6];
 	strncpy(device,"inst0",6);
-	return vxi11_open_device(ip, device);
+	return vxi11_open_device(address, device);
 	}
 
 
@@ -193,7 +193,7 @@ CLINK *vxi11_open_device(const char *ip) {
 
 /* Use this function from user land to close a device and/or sever a link. Can
  * be used multiple times for the same device (the library will keep track).*/
-int     vxi11_close_device(const char *ip, CLINK *clink) {
+int     vxi11_close_device(const char *address, CLINK *clink) {
 int     ret = 0;
 #ifdef WIN32
 #else
@@ -202,7 +202,7 @@ struct _vxi11_client_t *tail, *last = NULL, *client = NULL;
 	/* Which instrument are we referring to? */
 	tail = VXI11_CLIENTS;
 	while(tail){
-		if (strncmp(ip, tail->ip_address, 20) == 0 ) {
+		if (strncmp(address, tail->address, 20) == 0 ) {
 			client = tail;
 			break;
 		}
@@ -210,21 +210,21 @@ struct _vxi11_client_t *tail, *last = NULL, *client = NULL;
 		tail = tail->next;
 	}
 
-	/* Something's up if we can't find the IP address! */
+	/* Something's up if we can't find the address! */
 	if (!client){
 		printf("vxi11_close_device: error: I have no record of you ever opening device\n");
-		printf("                    with IP address %s\n",ip);
+		printf("                    with address %s\n", address);
 		ret = -4;
-	} else {	/* Found the IP, there's more than one link to that instrument,
+	} else {	/* Found the address, there's more than one link to that instrument,
 			 * so keep track and just close the link */
 		if (client->link_count > 1 ) {
-			ret = _vxi11_close_link(ip, clink);
+			ret = _vxi11_close_link(address, clink);
 			client->link_count--;
 			}
-		/* Found the IP, it's the last link, so close the device (link
+		/* Found the address, it's the last link, so close the device (link
 		 * AND client) */
 		else {
-			ret = _vxi11_close_link(ip, clink);
+			ret = _vxi11_close_link(address, clink);
 			clnt_destroy(clink->client);
 
 			if(last){
@@ -529,7 +529,7 @@ double	val;
 /* OPEN FUNCTIONS *
  * ============== */
 
-static int _vxi11_open_link(const char *ip, CLINK *clink, char *device) {
+static int _vxi11_open_link(const char *address, CLINK *clink, char *device) {
 #ifndef WIN32
 Create_LinkParms link_parms;
 
@@ -542,7 +542,7 @@ Create_LinkParms link_parms;
 	clink->link = (Create_LinkResp *) calloc(1, sizeof(Create_LinkResp));
 
 	if (create_link_1(&link_parms, clink->link, clink->client) != RPC_SUCCESS) {
-		clnt_perror(clink->client, ip);
+		clnt_perror(clink->client, address);
 		return -2;
 		}
 #endif
@@ -553,13 +553,13 @@ Create_LinkParms link_parms;
 /* CLOSE FUNCTIONS *
  * =============== */
 
-static int _vxi11_close_link(const char *ip, CLINK *clink){
+static int _vxi11_close_link(const char *address, CLINK *clink){
 #ifndef WIN32
 Device_Error dev_error;
 	memset(&dev_error, 0, sizeof(dev_error)); 
 
 	if (destroy_link_1(&clink->link->lid, &dev_error, clink->client) != RPC_SUCCESS) {
-		clnt_perror(clink->client,ip);
+		clnt_perror(clink->client, address);
 		return -1;
 		}
 #endif
