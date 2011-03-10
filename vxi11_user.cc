@@ -70,7 +70,7 @@ int	VXI11_LINK_COUNT[VXI11_MAX_CLIENTS];
 
 /* Internal function declarations. */
 static int _vxi11_open_link(const char *ip, CLINK *clink, char *device);
-static int  _vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link);
+static int  _vxi11_close_link(const char *ip, CLINK *clink);
 
 /*****************************************************************************
  * KEY USER FUNCTIONS - USE THESE FROM YOUR PROGRAMS OR INSTRUMENT LIBRARIES *
@@ -187,13 +187,13 @@ int     device_no = -1;
 	else {	/* Found the IP, there's more than one link to that instrument,
 		 * so keep track and just close the link */
 		if (VXI11_LINK_COUNT[device_no] > 1 ) {
-			ret = _vxi11_close_link(ip,clink->client, clink->link);
+			ret = _vxi11_close_link(ip, clink);
 			VXI11_LINK_COUNT[device_no]--;
 			}
 		/* Found the IP, it's the last link, so close the device (link
 		 * AND client) */
 		else {
-			ret = _vxi11_close_link(ip, clink->client, clink->link);
+			ret = _vxi11_close_link(ip, clink);
 			clnt_destroy(clink->client);
 			/* Remove the IP address, so that if we re-open the same device
 			 * we do it properly */
@@ -510,12 +510,12 @@ Create_LinkParms link_parms;
 /* CLOSE FUNCTIONS *
  * =============== */
 
-static int _vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link) {
+static int _vxi11_close_link(const char *ip, CLINK *clink){
 Device_Error dev_error;
 	memset(&dev_error, 0, sizeof(dev_error)); 
 
-	if (destroy_link_1(&link->lid, &dev_error, client) != RPC_SUCCESS) {
-		clnt_perror(client,ip);
+	if (destroy_link_1(&clink->link->lid, &dev_error, clink->client) != RPC_SUCCESS) {
+		clnt_perror(clink->client,ip);
 		return -1;
 		}
 
