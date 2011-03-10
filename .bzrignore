@@ -1,3 +1,4 @@
+build/
 vxi11.h
 vxi11_cmd
 vxi11_clnt.c
