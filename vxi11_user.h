@@ -73,7 +73,6 @@ double	vxi11_obtain_double_value(CLINK *clink, const char *cmd, unsigned long ti
  * (see above) as it's perhaps a little clearer this way. Probably not worth
  * delving this deep in use, but it's where the real nitty gritty is. */
 int	vxi11_open_link(const char *ip, CLIENT **client, VXI11_LINK **link, char *device);
-int	vxi11_close_device(const char *ip, CLIENT *client, VXI11_LINK *link);
 int	vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link);
 
 #endif

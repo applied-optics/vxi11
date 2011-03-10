@@ -203,7 +203,8 @@ int     device_no = -1;
 		/* Found the IP, it's the last link, so close the device (link
 		 * AND client) */
 		else {
-			ret = vxi11_close_device(ip, clink->client, clink->link);
+			ret = vxi11_close_link(ip, clink->client, clink->link);
+			clnt_destroy(clink->client);
 			/* Remove the IP address, so that if we re-open the same device
 			 * we do it properly */
 			memset(VXI11_IP_ADDRESS[device_no], 0, 20);
@@ -517,15 +518,6 @@ Create_LinkParms link_parms;
 
 /* CLOSE FUNCTIONS *
  * =============== */
-int	vxi11_close_device(const char *ip, CLIENT *client, VXI11_LINK *link) {
-int	ret;
-
-	ret = vxi11_close_link(ip, client, link);
-
-	clnt_destroy(client);
-
-	return ret;
-	}
 
 int	vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link) {
 Device_Error dev_error;
