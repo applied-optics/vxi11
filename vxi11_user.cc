@@ -347,11 +347,6 @@ char	buf[50]; /* 50=arbitrary length... more than enough for one number in ascii
 	return strtol(buf, (char **)NULL, 10);
 	}
 
-/* Lazy wrapper function with default read timeout */
-long	vxi11_obtain_long_value(CLINK *clink, const char *cmd) {
-	return vxi11_obtain_long_value(clink, cmd, VXI11_READ_TIMEOUT);
-	}
-
 
 /* FUNCTIONS TO RETURN A DOUBLE FLOAT VALUE SENT AS RESPONSE TO A QUERY *
  * ==================================================================== */
@@ -365,11 +360,6 @@ double	val;
 		}
 	val = strtod(buf, (char **)NULL);
 	return val;
-	}
-
-/* Lazy wrapper function with default read timeout */
-double	vxi11_obtain_double_value(CLINK *clink, const char *cmd) {
-	return vxi11_obtain_double_value(clink, cmd, VXI11_READ_TIMEOUT);
 	}
 
 
@@ -512,9 +502,6 @@ char	*send_cmd;
 
 // It appeared that this function wasn't correctly dealing with more data available than specified in len.
 // This patch attempts to fix this issue.	RDP 2007/8/13
-
-/* wrapper, for default timeout */ long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len) { return vxi11_receive(client, link, buffer, len, VXI11_READ_TIMEOUT);
-	}
 
 #define RCV_END_BIT	0x04	// An end indicator has been read
 #define RCV_CHR_BIT	0x02	// A termchr is set in flags and a character which matches termChar is transferred
