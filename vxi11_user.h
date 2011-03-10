@@ -22,8 +22,8 @@
  * The author's email address is steve.sharples@nottingham.ac.uk
  */
 
-#ifndef	__VXI11_USER__
-#define	__VXI11_USER__
+#ifndef	_VXI11_USER_H_
+#define	_VXI11_USER_H_
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
