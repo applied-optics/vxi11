@@ -223,11 +223,6 @@ int	vxi11_send(CLINK *clink, const char *cmd, unsigned long len) {
 /* RECEIVE FUNCTIONS *
  * ================= */
 
-/* Lazy wrapper for when I can't be bothered to specify a read timeout */
-long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len) {
-	return vxi11_receive(clink, buffer, len, VXI11_READ_TIMEOUT);
-	}
-
 long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout) {
 	return vxi11_receive(clink->client, clink->link, buffer, len, timeout);
 	}

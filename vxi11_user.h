@@ -59,8 +59,7 @@ int	vxi11_open_device(const char *ip, CLINK *clink, char *device);
 int	vxi11_close_device(const char *ip, CLINK *clink);
 int	vxi11_send(CLINK *clink, const char *cmd);
 int	vxi11_send(CLINK *clink, const char *cmd, unsigned long len);
-long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len);
-long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout);
+long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout=VXI11_DEFAULT_TIMEOUT);
 
 /* Utility functions, that use send() and receive(). Use these too. */
 int	vxi11_send_data_block(CLINK *clink, const char *cmd, char *buffer, unsigned long len);
