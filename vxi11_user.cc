@@ -27,8 +27,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <rpc/rpc.h>
-#include "vxi11.h"
+#ifdef WIN32
+#  include <visa.h>
+#else
+#  include <rpc/rpc.h>
+#  include "vxi11.h"
+#endif
 
 /***************************************************************************** 
  * GENERAL NOTES
@@ -64,8 +68,13 @@
 					 * times out ON THE INSTURMENT. */
 
 struct _CLINK {
+#ifdef WIN32
+	ViSession rm;
+	ViSession session;
+#else
 	VXI11_CLIENT *client;
 	VXI11_LINK *link;
+#endif
 } ;
 
 /* Global variables. Keep track of multiple links per client. We need this
@@ -81,7 +90,9 @@ struct _CLINK {
 struct _vxi11_client_t {
 	struct _vxi11_client_t *next;
 	char ip_address[20];
+#ifndef WIN32
 	CLIENT *client_address;
+#endif
 	int link_count;
 };
 
@@ -101,9 +112,11 @@ static int  _vxi11_close_link(const char *ip, CLINK *clink);
 /* Use this function from user land to open a device and create a link. Can be
  * used multiple times for the same device (the library will keep track).*/
 CLINK *vxi11_open_device(const char *ip, char *device) {
+CLINK *clink = NULL;
+#ifdef WIN32
+#else
 int	ret;
 struct _vxi11_client_t *tail, *client = NULL;
-CLINK *clink;
 
 
 	clink = (CLINK *)calloc(1, sizeof(CLINK ));
@@ -155,7 +168,7 @@ CLINK *clink;
 		ret = _vxi11_open_link(ip, clink, device);
 		client->link_count++;
 	}
-
+#endif
 //	printf("after creating link, clink->link = %ld\n", clink->link);
 	return clink;
 	}
@@ -181,7 +194,9 @@ CLINK *vxi11_open_device(const char *ip) {
 /* Use this function from user land to close a device and/or sever a link. Can
  * be used multiple times for the same device (the library will keep track).*/
 int     vxi11_close_device(const char *ip, CLINK *clink) {
-int     ret;
+int     ret = 0;
+#ifdef WIN32
+#else
 struct _vxi11_client_t *tail, *last = NULL, *client = NULL;
 
 	/* Which instrument are we referring to? */
@@ -220,6 +235,7 @@ struct _vxi11_client_t *tail, *last = NULL, *client = NULL;
 			free(client);
 		}
 	}
+#endif
 	free(clink);
 	return ret;
 	}
@@ -237,6 +253,8 @@ int	vxi11_send(CLINK *clink, const char *cmd) {
 /* We still need the version of the function where the length is set explicitly
  * though, for when we are sending fixed length data blocks. */
 int	vxi11_send(CLINK *clink, const char *cmd, unsigned long len) {
+#ifdef WIN32
+#else
 Device_WriteParms write_parms;
 unsigned int	bytes_left = len;
 char	*send_cmd;
@@ -291,6 +309,7 @@ char	*send_cmd;
 		} while (bytes_left > 0);
 
 	delete[] send_cmd;
+#endif
 	return 0;
 	}
 
@@ -303,9 +322,11 @@ char	*send_cmd;
 #define RCV_REQCNT_BIT	0x01	// requestSize bytes have been transferred.  This includes a request size of zero.
 
 long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout) {
+unsigned long	curr_pos = 0;
+#ifdef WIN32
+#else
 Device_ReadParms read_parms;
 Device_ReadResp  read_resp;
-unsigned long	curr_pos = 0;
 
 	read_parms.lid			= clink->link->lid;
 	read_parms.requestSize		= len;
@@ -360,6 +381,7 @@ unsigned long	curr_pos = 0;
 			return -100;
 			}
 		} while(1);
+#endif
 	return (curr_pos); /*actual number of bytes received*/
 	}
 
@@ -508,7 +530,7 @@ double	val;
  * ============== */
 
 static int _vxi11_open_link(const char *ip, CLINK *clink, char *device) {
-
+#ifndef WIN32
 Create_LinkParms link_parms;
 
 	/* Set link parameters */
@@ -523,6 +545,7 @@ Create_LinkParms link_parms;
 		clnt_perror(clink->client, ip);
 		return -2;
 		}
+#endif
 	return 0;
 	}
 
@@ -531,6 +554,7 @@ Create_LinkParms link_parms;
  * =============== */
 
 static int _vxi11_close_link(const char *ip, CLINK *clink){
+#ifndef WIN32
 Device_Error dev_error;
 	memset(&dev_error, 0, sizeof(dev_error)); 
 
@@ -538,7 +562,7 @@ Device_Error dev_error;
 		clnt_perror(clink->client,ip);
 		return -1;
 		}
-
+#endif
 	return 0;
 	}
 
