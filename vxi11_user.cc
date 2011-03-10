@@ -60,7 +60,6 @@
 
 #define	VXI11_CLIENT		CLIENT
 #define	VXI11_LINK		Create_LinkResp
-#define	VXI11_MAX_CLIENTS	256	/* maximum no of unique addresses/clients */
 #define	VXI11_NULL_READ_RESP	50	/* vxi11_receive() return value if a query
 					 * times out ON THE INSTRUMENT (and so we have
 					 * to resend the query again) */
