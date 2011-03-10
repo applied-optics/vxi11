@@ -261,12 +261,24 @@ int	vxi11_send(CLINK *clink, const char *cmd, unsigned long len) {
 #ifdef WIN32
 #else
 Device_WriteParms write_parms;
+#endif
 unsigned int	bytes_left = len;
-char	*send_cmd;
+unsigned long write_count;
+unsigned char	*send_cmd;
 
-	send_cmd = new char[len];
+	send_cmd = new unsigned char[len];
 	memcpy(send_cmd, cmd, len);
 
+#ifdef WIN32
+	while(bytes_left > 0){
+		if(viWrite(clink->session, send_cmd + (len - bytes_left), bytes_left, &write_count) == VI_SUCCESS){
+			bytes_left -= write_count;
+		}else{
+			delete[] send_cmd;
+			return 1;
+		}
+	}
+#else
 	write_parms.lid			= clink->link->lid;
 	write_parms.io_timeout		= VXI11_DEFAULT_TIMEOUT;
 	write_parms.lock_timeout	= VXI11_DEFAULT_TIMEOUT;
@@ -312,9 +324,9 @@ char	*send_cmd;
 			}
 		bytes_left -= write_resp.size;
 		} while (bytes_left > 0);
-
-	delete[] send_cmd;
 #endif
+	delete[] send_cmd;
+
 	return 0;
 	}
 
