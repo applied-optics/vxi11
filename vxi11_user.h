@@ -76,8 +76,6 @@ int	vxi11_open_device(const char *ip, CLIENT **client, VXI11_LINK **link, char *
 int	vxi11_open_link(const char *ip, CLIENT **client, VXI11_LINK **link, char *device);
 int	vxi11_close_device(const char *ip, CLIENT *client, VXI11_LINK *link);
 int	vxi11_close_link(const char *ip, CLIENT *client, VXI11_LINK *link);
-int	vxi11_send(CLIENT *client, VXI11_LINK *link, const char *cmd);
-int	vxi11_send(CLIENT *client, VXI11_LINK *link, const char *cmd, unsigned long len);
 long	vxi11_receive(CLIENT *client, VXI11_LINK *link, char *buffer, unsigned long len, unsigned long timeout=VXI11_READ_TIMEOUT);
 
 #endif

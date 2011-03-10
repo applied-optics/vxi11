@@ -216,7 +216,61 @@ int	vxi11_send(CLINK *clink, const char *cmd) {
 /* We still need the version of the function where the length is set explicitly
  * though, for when we are sending fixed length data blocks. */
 int	vxi11_send(CLINK *clink, const char *cmd, unsigned long len) {
-	return vxi11_send(clink->client, clink->link, cmd, len);
+Device_WriteParms write_parms;
+unsigned int	bytes_left = len;
+char	*send_cmd;
+
+	send_cmd = new char[len];
+	memcpy(send_cmd, cmd, len);
+
+	write_parms.lid			= clink->link->lid;
+	write_parms.io_timeout		= VXI11_DEFAULT_TIMEOUT;
+	write_parms.lock_timeout	= VXI11_DEFAULT_TIMEOUT;
+
+/* We can only write (link->maxRecvSize) bytes at a time, so we sit in a loop,
+ * writing a chunk at a time, until we're done. */
+
+	do {
+		Device_WriteResp write_resp;
+		memset(&write_resp, 0, sizeof(write_resp));
+
+		if (bytes_left <= clink->link->maxRecvSize) {
+			write_parms.flags		= 8;
+			write_parms.data.data_len	= bytes_left;
+			}
+		else {
+			write_parms.flags		= 0;
+			/* We need to check that maxRecvSize is a sane value (ie >0). Believe it
+			 * or not, on some versions of Agilent Infiniium scope firmware the scope
+			 * returned "0", which breaks Rule B.6.3 of the VXI-11 protocol. Nevertheless
+			 * we need to catch this, otherwise the program just hangs. */
+			if (clink->link->maxRecvSize > 0) {
+				write_parms.data.data_len = clink->link->maxRecvSize;
+				}
+			else {
+				write_parms.data.data_len	= 4096; /* pretty much anything should be able to cope with 4kB */
+				}
+			}
+		write_parms.data.data_val	= send_cmd + (len - bytes_left);
+		
+		if(device_write_1(&write_parms, &write_resp, clink->client) != RPC_SUCCESS) {
+			delete[] send_cmd;
+			return -VXI11_NULL_WRITE_RESP; /* The instrument did not acknowledge the write, just completely
+							  dropped it. There was no vxi11 comms error as such, the 
+							  instrument is just being rude. Usually occurs when the instrument
+							  is busy. If we don't check this first, then the following 
+							  line causes a seg fault */
+			}
+		if (write_resp.error != 0) {
+			printf("vxi11_user: write error: %d\n", (int)write_resp.error);
+			delete[] send_cmd;
+			return -(write_resp.error);
+			}
+		bytes_left -= write_resp.size;
+		} while (bytes_left > 0);
+
+	delete[] send_cmd;
+	return 0;
 	}
 
 
@@ -423,76 +477,6 @@ Device_Error dev_error;
 		return -1;
 		}
 
-	return 0;
-	}
-
-
-/* SEND FUNCTIONS *
- * ============== */
-
-/* A _lot_ of the time we are sending text strings, and can safely rely on
- * strlen(cmd). */
-int	vxi11_send(CLIENT *client, VXI11_LINK *link, const char *cmd) {
-	return vxi11_send(client, link, cmd, strlen(cmd));
-	}
-
-/* We still need the version of the function where the length is set explicitly
- * though, for when we are sending fixed length data blocks. */
-int	vxi11_send(CLIENT *client, VXI11_LINK *link, const char *cmd, unsigned long len) {
-Device_WriteParms write_parms;
-unsigned int	bytes_left = len;
-char	*send_cmd;
-
-	send_cmd = new char[len];
-	memcpy(send_cmd, cmd, len);
-
-	write_parms.lid			= link->lid;
-	write_parms.io_timeout		= VXI11_DEFAULT_TIMEOUT;
-	write_parms.lock_timeout	= VXI11_DEFAULT_TIMEOUT;
-
-/* We can only write (link->maxRecvSize) bytes at a time, so we sit in a loop,
- * writing a chunk at a time, until we're done. */
-
-	do {
-		Device_WriteResp write_resp;
-		memset(&write_resp, 0, sizeof(write_resp));
-
-		if (bytes_left <= link->maxRecvSize) {
-			write_parms.flags		= 8;
-			write_parms.data.data_len	= bytes_left;
-			}
-		else {
-			write_parms.flags		= 0;
-			/* We need to check that maxRecvSize is a sane value (ie >0). Believe it
-			 * or not, on some versions of Agilent Infiniium scope firmware the scope
-			 * returned "0", which breaks Rule B.6.3 of the VXI-11 protocol. Nevertheless
-			 * we need to catch this, otherwise the program just hangs. */
-			if (link->maxRecvSize > 0) {
-				write_parms.data.data_len	= link->maxRecvSize;
-				}
-			else {
-				write_parms.data.data_len	= 4096; /* pretty much anything should be able to cope with 4kB */
-				}
-			}
-		write_parms.data.data_val	= send_cmd + (len - bytes_left);
-		
-		if(device_write_1(&write_parms, &write_resp, client) != RPC_SUCCESS) {
-			delete[] send_cmd;
-			return -VXI11_NULL_WRITE_RESP; /* The instrument did not acknowledge the write, just completely
-							  dropped it. There was no vxi11 comms error as such, the 
-							  instrument is just being rude. Usually occurs when the instrument
-							  is busy. If we don't check this first, then the following 
-							  line causes a seg fault */
-			}
-		if (write_resp.error != 0) {
-			printf("vxi11_user: write error: %d\n", (int)write_resp.error);
-			delete[] send_cmd;
-			return -(write_resp.error);
-			}
-		bytes_left -= write_resp.size;
-		} while (bytes_left > 0);
-
-	delete[] send_cmd;
 	return 0;
 	}
 
