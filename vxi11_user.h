@@ -36,14 +36,42 @@
 #  define __stdcall
 #endif
 
-#define	VXI11_DEFAULT_TIMEOUT	10000	/* in ms */
-#define	VXI11_READ_TIMEOUT	2000	/* in ms */
+#ifdef WIN32
+#  include <visa.h>
+#else
+#  include <rpc/rpc.h>
+#  include "vxi11.h"
+#endif
+
+#define	VXI11_CLIENT		CLIENT
+#define	VXI11_LINK		Create_LinkResp
+
+struct _CLINK {
+#ifdef WIN32
+	ViSession rm;
+	ViSession session;
+#else
+	VXI11_CLIENT *client;
+	VXI11_LINK *link;
+#endif
+} ;
 
 typedef	struct _CLINK CLINK;
+
+#define	VXI11_DEFAULT_TIMEOUT	10000	/* in ms */
+#define	VXI11_READ_TIMEOUT	2000	/* in ms */
+#define	VXI11_NULL_READ_RESP	50	/* vxi11_receive() return value if a query
+					 * times out ON THE INSTRUMENT (and so we have
+					 * to resend the query again) */
+#define	VXI11_NULL_WRITE_RESP	51	/* vxi11_send() return value if a sent command
+					 * times out ON THE INSTURMENT. */
+
 
 /* The four main functions: open, close, send, receieve (plus a couple of wrappers) */
 vx_EXPORT CLINK *vxi11_open_device(const char *address);
 vx_EXPORT CLINK *vxi11_open_device(const char *address, char *device);
+vx_EXPORT int vxi11_open_device(const char *address, CLINK *clink);
+vx_EXPORT int vxi11_open_device(const char *address, CLINK *clink, char *device);
 vx_EXPORT int vxi11_close_device(const char *address, CLINK *clink);
 vx_EXPORT int vxi11_send(CLINK *clink, const char *cmd);
 vx_EXPORT int vxi11_send(CLINK *clink, const char *cmd, unsigned long len);

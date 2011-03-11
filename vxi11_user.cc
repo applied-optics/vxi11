@@ -58,24 +58,6 @@
  */
 
 
-#define	VXI11_CLIENT		CLIENT
-#define	VXI11_LINK		Create_LinkResp
-#define	VXI11_NULL_READ_RESP	50	/* vxi11_receive() return value if a query
-					 * times out ON THE INSTRUMENT (and so we have
-					 * to resend the query again) */
-#define	VXI11_NULL_WRITE_RESP	51	/* vxi11_send() return value if a sent command
-					 * times out ON THE INSTURMENT. */
-
-struct _CLINK {
-#ifdef WIN32
-	ViSession rm;
-	ViSession session;
-#else
-	VXI11_CLIENT *client;
-	VXI11_LINK *link;
-#endif
-} ;
-
 /* Global variables. Keep track of multiple links per client. We need this
  * because:
  * - we'd like the library to be able to cope with multiple links to a given
@@ -111,7 +93,19 @@ static int  _vxi11_close_link(const char *address, CLINK *clink);
 /* Use this function from user land to open a device and create a link. Can be
  * used multiple times for the same device (the library will keep track).*/
 CLINK *vxi11_open_device(const char *address, char *device) {
-CLINK *clink = NULL;
+	CLINK *clink = NULL;
+
+	clink = (CLINK *)calloc(1, sizeof(CLINK ));
+	if(!clink) return NULL;
+
+	if(vxi11_open_device(address, clink, device)){
+		free(clink);
+		clink = NULL;
+	}
+	return clink;
+}
+
+int vxi11_open_device(const char *address, CLINK *clink, char *device) {
 #ifdef WIN32
 	ViStatus status;
 	char buf[256];
@@ -119,9 +113,6 @@ CLINK *clink = NULL;
 int	ret;
 struct _vxi11_client_t *tail, *client = NULL;
 #endif
-
-	clink = (CLINK *)calloc(1, sizeof(CLINK ));
-	if(!clink) return NULL;
 
 #ifdef WIN32
 	status = viOpenDefaultRM(&clink->rm);
@@ -154,19 +145,18 @@ struct _vxi11_client_t *tail, *client = NULL;
 		 * must be link number 1. Keep track of how many devices we've
 		 * opened so we don't run out of storage space. */
 		client = (struct _vxi11_client_t *)calloc(1, sizeof(struct _vxi11_client_t));
-		if(!client) return NULL;
+		if(!client) return 1;
 
 		clink->client = clnt_create(address, DEVICE_CORE, DEVICE_CORE_VERSION, "tcp");
 
 		if(clink->client == NULL) {
 			clnt_pcreateerror(address);
-			return NULL;
+			return 1;
 		}
 		ret = _vxi11_open_link(address, clink, device);
 		if(ret != 0){
 			clnt_destroy(clink->client);
-			free(clink);
-			return NULL;
+			return 1;
 		}
 
 		strncpy(client->address, address, 20);
@@ -183,7 +173,7 @@ struct _vxi11_client_t *tail, *client = NULL;
 	}
 #endif
 //	printf("after creating link, clink->link = %ld\n", clink->link);
-	return clink;
+	return 0;
 	}
 
 /* This is a wrapper function, used for the situations where there is only one
@@ -193,6 +183,11 @@ struct _vxi11_client_t *tail, *client = NULL;
  * (devices). In order to differentiate between them, we need to pass a device
  * name. This gets used in the _vxi11_open_link() fn, as the link_parms.device
  * value. */
+int vxi11_open_device(const char *address, CLINK *clink) {
+	char device[6];
+	strncpy(device,"inst0",6);
+	return vxi11_open_device(address, clink, device);
+	}
 CLINK *vxi11_open_device(const char *address) {
 	char device[6];
 	strncpy(device,"inst0",6);
@@ -247,11 +242,9 @@ struct _vxi11_client_t *tail, *last = NULL, *client = NULL;
 			}else{
 				VXI11_CLIENTS = client->next;
 			}
-			free(client);
 		}
 	}
 #endif
-	free(clink);
 	return ret;
 	}
 
