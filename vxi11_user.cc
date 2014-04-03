@@ -37,7 +37,7 @@
 #define	VXI11_CLIENT		CLIENT
 #define	VXI11_LINK		Create_LinkResp
 
-struct _CLINK {
+struct _VXI11_CLINK {
 #ifdef WIN32
 	ViSession rm;
 	ViSession session;
@@ -53,21 +53,21 @@ struct _CLINK {
  *
  * There are four functions at the heart of this library:
  *
- * CLINK *vxi11_open_device(char *address, char *device)
- * int	vxi11_close_device(char *address, CLINK *clink)
- * int	vxi11_send(CLINK *clink, char *cmd, unsigned long len)
+ * VXI11_CLINK *vxi11_open_device(char *address, char *device)
+ * int	vxi11_close_device(char *address, VXI11_CLINK *clink)
+ * int	vxi11_send(VXI11_CLINK *clink, char *cmd, unsigned long len)
  *    --- or --- (if sending just text)
- * int	vxi11_send(CLINK *clink, char *cmd)
- * long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout)
+ * int	vxi11_send(VXI11_CLINK *clink, char *cmd)
+ * long	vxi11_receive(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout)
  *
  * There are then useful (to me, anyway) more specific functions built on top
  * of these:
  *
- * int	vxi11_send_data_block(CLINK *clink, char *cmd, char *buffer, unsigned long len)
- * long	vxi11_receive_data_block(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout)
- * long	vxi11_send_and_receive(CLINK *clink, char *cmd, char *buf, unsigned long buf_len, unsigned long timeout)
- * long	vxi11_obtain_long_value(CLINK *clink, char *cmd, unsigned long timeout)
- * double vxi11_obtain_double_value(CLINK *clink, char *cmd, unsigned long timeout)
+ * int	vxi11_send_data_block(VXI11_CLINK *clink, char *cmd, char *buffer, unsigned long len)
+ * long	vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout)
+ * long	vxi11_send_and_receive(VXI11_CLINK *clink, char *cmd, char *buf, unsigned long buf_len, unsigned long timeout)
+ * long	vxi11_obtain_long_value(VXI11_CLINK *clink, char *cmd, unsigned long timeout)
+ * double vxi11_obtain_double_value(VXI11_CLINK *clink, char *cmd, unsigned long timeout)
  */
 
 
@@ -93,8 +93,8 @@ struct _vxi11_client_t {
 static struct _vxi11_client_t *VXI11_CLIENTS = NULL;
 
 /* Internal function declarations. */
-static int _vxi11_open_link(const char *address, CLINK *clink, char *device);
-static int  _vxi11_close_link(const char *address, CLINK *clink);
+static int _vxi11_open_link(const char *address, VXI11_CLINK *clink, char *device);
+static int  _vxi11_close_link(const char *address, VXI11_CLINK *clink);
 
 /*****************************************************************************
  * KEY USER FUNCTIONS - USE THESE FROM YOUR PROGRAMS OR INSTRUMENT LIBRARIES *
@@ -105,10 +105,10 @@ static int  _vxi11_close_link(const char *address, CLINK *clink);
 
 /* Use this function from user land to open a device and create a link. Can be
  * used multiple times for the same device (the library will keep track).*/
-CLINK *vxi11_open_device(const char *address, char *device) {
-	CLINK *clink = NULL;
+VXI11_CLINK *vxi11_open_device(const char *address, char *device) {
+	VXI11_CLINK *clink = NULL;
 
-	clink = (CLINK *)calloc(1, sizeof(CLINK ));
+	clink = (VXI11_CLINK *)calloc(1, sizeof(VXI11_CLINK ));
 	if(!clink) return NULL;
 
 	if(vxi11_open_device(address, clink, device)){
@@ -118,7 +118,7 @@ CLINK *vxi11_open_device(const char *address, char *device) {
 	return clink;
 }
 
-int vxi11_open_device(const char *address, CLINK *clink, char *device) {
+int vxi11_open_device(const char *address, VXI11_CLINK *clink, char *device) {
 #ifdef WIN32
 	ViStatus status;
 	char buf[256];
@@ -196,12 +196,12 @@ struct _vxi11_client_t *tail, *client = NULL;
  * (devices). In order to differentiate between them, we need to pass a device
  * name. This gets used in the _vxi11_open_link() fn, as the link_parms.device
  * value. */
-int vxi11_open_device(const char *address, CLINK *clink) {
+int vxi11_open_device(const char *address, VXI11_CLINK *clink) {
 	char device[6];
 	strncpy(device,"inst0",6);
 	return vxi11_open_device(address, clink, device);
 	}
-CLINK *vxi11_open_device(const char *address) {
+VXI11_CLINK *vxi11_open_device(const char *address) {
 	char device[6];
 	strncpy(device,"inst0",6);
 	return vxi11_open_device(address, device);
@@ -214,7 +214,7 @@ CLINK *vxi11_open_device(const char *address) {
 
 /* Use this function from user land to close a device and/or sever a link. Can
  * be used multiple times for the same device (the library will keep track).*/
-int     vxi11_close_device(const char *address, CLINK *clink) {
+int     vxi11_close_device(const char *address, VXI11_CLINK *clink) {
 int     ret = 0;
 #ifdef WIN32
 	viClose(clink->session);
@@ -267,13 +267,13 @@ struct _vxi11_client_t *tail, *last = NULL, *client = NULL;
 
 /* A _lot_ of the time we are sending text strings, and can safely rely on
  * strlen(cmd). */
-int	vxi11_send(CLINK *clink, const char *cmd) {
+int	vxi11_send(VXI11_CLINK *clink, const char *cmd) {
 	return vxi11_send(clink, cmd, strlen(cmd));
 	}
 
 /* We still need the version of the function where the length is set explicitly
  * though, for when we are sending fixed length data blocks. */
-int	vxi11_send(CLINK *clink, const char *cmd, unsigned long len) {
+int	vxi11_send(VXI11_CLINK *clink, const char *cmd, unsigned long len) {
 #ifdef WIN32
 	ViStatus status;
 	char buf[256];
@@ -363,7 +363,7 @@ unsigned long write_count;
 #define RCV_CHR_BIT	0x02	// A termchr is set in flags and a character which matches termChar is transferred
 #define RCV_REQCNT_BIT	0x01	// requestSize bytes have been transferred.  This includes a request size of zero.
 
-long	vxi11_receive(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout) {
+long	vxi11_receive(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout) {
 unsigned long	curr_pos = 0;
 #ifdef WIN32
 	viRead(clink->session, (unsigned char *)buffer, len, &curr_pos);
@@ -437,7 +437,7 @@ Device_ReadResp  read_resp;
 
 /* SEND FIXED LENGTH DATA BLOCK FUNCTION *
  * ===================================== */
-int	vxi11_send_data_block(CLINK *clink, const char *cmd, char *buffer, unsigned long len) {
+int	vxi11_send_data_block(VXI11_CLINK *clink, const char *cmd, char *buffer, unsigned long len) {
 char	*out_buffer;
 int	cmd_len=strlen(cmd);
 int	ret;
@@ -464,7 +464,7 @@ int	ret;
  *   |\--------- number of digits that follow (in this case 8, with leading 0's)
  *   \---------- always starts with #
  */
-long	vxi11_receive_data_block(CLINK *clink, char *buffer, unsigned long len, unsigned long timeout) {
+long	vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout) {
 /* I'm not sure what the maximum length of this header is, I'll assume it's 
  * 11 (#9 + 9 digits) */
 unsigned long	necessary_buffer_size;
@@ -508,7 +508,7 @@ char		scan_cmd[20];
 
 /* This is mainly a useful function for the overloaded vxi11_obtain_value()
  * fn's, but is also handy and useful for user and library use */
-long	vxi11_send_and_receive(CLINK *clink, const char *cmd, char *buf, unsigned long buf_len, unsigned long timeout) {
+long	vxi11_send_and_receive(VXI11_CLINK *clink, const char *cmd, char *buf, unsigned long buf_len, unsigned long timeout) {
 int	ret;
 long	bytes_returned;
 	do {
@@ -538,7 +538,7 @@ long	bytes_returned;
 
 /* FUNCTIONS TO RETURN A LONG INTEGER VALUE SENT AS RESPONSE TO A QUERY *
  * ==================================================================== */
-long	vxi11_obtain_long_value(CLINK *clink, const char *cmd, unsigned long timeout) {
+long	vxi11_obtain_long_value(VXI11_CLINK *clink, const char *cmd, unsigned long timeout) {
 char	buf[50]; /* 50=arbitrary length... more than enough for one number in ascii */
 	memset(buf, 0, 50);
 	if (vxi11_send_and_receive(clink, cmd, buf, 50, timeout) != 0) {
@@ -551,7 +551,7 @@ char	buf[50]; /* 50=arbitrary length... more than enough for one number in ascii
 
 /* FUNCTIONS TO RETURN A DOUBLE FLOAT VALUE SENT AS RESPONSE TO A QUERY *
  * ==================================================================== */
-double	vxi11_obtain_double_value(CLINK *clink, const char *cmd, unsigned long timeout) {
+double	vxi11_obtain_double_value(VXI11_CLINK *clink, const char *cmd, unsigned long timeout) {
 char	buf[50]; /* 50=arbitrary length... more than enough for one number in ascii */
 double	val;
 	memset(buf, 0, 50);
@@ -572,7 +572,7 @@ double	val;
 /* OPEN FUNCTIONS *
  * ============== */
 
-static int _vxi11_open_link(const char *address, CLINK *clink, char *device) {
+static int _vxi11_open_link(const char *address, VXI11_CLINK *clink, char *device) {
 #ifndef WIN32
 Create_LinkParms link_parms;
 
@@ -596,7 +596,7 @@ Create_LinkParms link_parms;
 /* CLOSE FUNCTIONS *
  * =============== */
 
-static int _vxi11_close_link(const char *address, CLINK *clink){
+static int _vxi11_close_link(const char *address, VXI11_CLINK *clink){
 #ifndef WIN32
 Device_Error dev_error;
 	memset(&dev_error, 0, sizeof(dev_error)); 
