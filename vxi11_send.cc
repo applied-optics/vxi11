@@ -32,29 +32,30 @@
 #define strncasecmp(a, b, c) stricmp(a, b)
 #endif
 
-int	main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
-static char	*device_ip;
-char		cmd[256];
-VXI11_CLINK		*clink;
+	static char *device_ip;
+	char cmd[256];
+	VXI11_CLINK *clink;
 
 	if (argc < 2) {
-		printf("usage: %s your.inst.ip.addr command\n",argv[0]);
+		printf("usage: %s your.inst.ip.addr command\n", argv[0]);
 		exit(1);
-		}
+	}
 
 	device_ip = argv[1];
 	clink = vxi11_open_device(device_ip);
 
-	if (!clink){
-		printf("Error: could not open device %s, quitting\n",device_ip);
+	if (!clink) {
+		printf("Error: could not open device %s, quitting\n",
+		       device_ip);
 		exit(2);
-		}
-
-	memset(cmd, 0, 256);		// initialize command string
-	strncpy(cmd, argv[2], 256);
-	vxi11_send(clink, cmd);
-	vxi11_close_device(device_ip,clink);
-	return 0;
 	}
 
+	memset(cmd, 0, 256);	// initialize command string
+	strncpy(cmd, argv[2], 256);
+	vxi11_send(clink, cmd);
+	vxi11_close_device(device_ip, clink);
+	return 0;
+}

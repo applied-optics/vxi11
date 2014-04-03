@@ -33,57 +33,61 @@
 #define strncasecmp(a, b, c) stricmp(a, b)
 #endif
 
-int	main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
-static char	*device_ip;
-static char	*device_name;
-char		cmd[256];
-char		buf[BUF_LEN];
-int		ret;
-long		bytes_returned;
-VXI11_CLINK		*clink;
+	static char *device_ip;
+	static char *device_name;
+	char cmd[256];
+	char buf[BUF_LEN];
+	int ret;
+	long bytes_returned;
+	VXI11_CLINK *clink;
 
 	if (argc < 2) {
-		printf("usage: %s your.inst.ip.addr [device_name]\n",argv[0]);
+		printf("usage: %s your.inst.ip.addr [device_name]\n", argv[0]);
 		exit(1);
-		}
+	}
 
 	device_ip = argv[1];
 	if (argc > 2) {
 		device_name = argv[2];
 		clink = vxi11_open_device(device_ip, device_name);
-		}
-	else {
+	} else {
 		clink = vxi11_open_device(device_ip);
-		}
+	}
 
-	if (!clink){
-		printf("Error: could not open device %s, quitting\n",device_ip);
+	if (!clink) {
+		printf("Error: could not open device %s, quitting\n",
+		       device_ip);
 		exit(2);
-		}
+	}
 
-	while(1){
-		memset(cmd, 0, 256);		// initialize command string
+	while (1) {
+		memset(cmd, 0, 256);	// initialize command string
 		memset(buf, 0, BUF_LEN);	// initialize buffer
 		printf("Input command or query ('q' to exit): ");
-		fgets(cmd,256,stdin);
-		cmd[strlen(cmd)-1] = 0;		// just gets rid of the \n
-		if (strncasecmp(cmd, "q", 1) == 0) break;
+		fgets(cmd, 256, stdin);
+		cmd[strlen(cmd) - 1] = 0;	// just gets rid of the \n
+		if (strncasecmp(cmd, "q", 1) == 0) {
+			break;
+		}
 
-		if (vxi11_send(clink, cmd) < 0) break;
+		if (vxi11_send(clink, cmd) < 0) {
+			break;
+		}
 		if (strstr(cmd, "?") != 0) {
 			bytes_returned = vxi11_receive(clink, buf, BUF_LEN);
 			if (bytes_returned > 0) {
-				printf("%s\n",buf);
-				}
-			else if (bytes_returned == -15) {
+				printf("%s\n", buf);
+			} else if (bytes_returned == -15) {
 				printf("*** [ NOTHING RECEIVED ] ***\n");
-				}
-			else	break;
+			} else {
+				break;
 			}
 		}
-
-	ret=vxi11_close_device(device_ip,clink);
-	return 0;
 	}
 
+	ret = vxi11_close_device(device_ip, clink);
+	return 0;
+}
