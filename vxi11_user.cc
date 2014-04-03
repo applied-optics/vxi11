@@ -161,10 +161,7 @@ int vxi11_open_device(const char *address, VXI11_CLINK * clink, char *device)
 		 * is, for this address. Because it's a new client, this
 		 * must be link number 1. Keep track of how many devices we've
 		 * opened so we don't run out of storage space. */
-		client =
-		    (struct _vxi11_client_t *)calloc(1,
-						     sizeof(struct
-							    _vxi11_client_t));
+		client = (struct _vxi11_client_t *)calloc(1, sizeof(struct _vxi11_client_t));
 		if (!client) {
 			return 1;
 		}
@@ -301,7 +298,10 @@ int vxi11_send(VXI11_CLINK * clink, const char *cmd, unsigned long len)
 	unsigned long write_count;
 
 #ifdef WIN32
-	send_cmd = new unsigned char[len];
+	send_cmd = (unsigned char *)malloc(len);
+	if (!send_cmd) {
+		return 1;
+	}
 	memcpy(send_cmd, cmd, len);
 
 	while (bytes_left > 0) {
@@ -311,14 +311,17 @@ int vxi11_send(VXI11_CLINK * clink, const char *cmd, unsigned long len)
 		if (status == VI_SUCCESS) {
 			bytes_left -= write_count;
 		} else {
-			delete[]send_cmd;
+			free(send_cmd);
 			viStatusDesc(clink->session, status, buf);
 			printf("%s\n", buf);
 			return status;
 		}
 	}
 #else
-	send_cmd = new char[len];
+	send_cmd = (char *)malloc(len);
+	if (!send_cmd) {
+		return 1;
+	}
 	memcpy(send_cmd, cmd, len);
 
 	write_parms.lid = clink->link->lid;
@@ -352,7 +355,7 @@ int vxi11_send(VXI11_CLINK * clink, const char *cmd, unsigned long len)
 
 		if (device_write_1(&write_parms, &write_resp, clink->client) !=
 		    RPC_SUCCESS) {
-			delete[]send_cmd;
+			free(send_cmd);
 			return -VXI11_NULL_WRITE_RESP;	/* The instrument did not acknowledge the write, just completely
 							   dropped it. There was no vxi11 comms error as such, the 
 							   instrument is just being rude. Usually occurs when the instrument
@@ -362,13 +365,13 @@ int vxi11_send(VXI11_CLINK * clink, const char *cmd, unsigned long len)
 		if (write_resp.error != 0) {
 			printf("vxi11_user: write error: %d\n",
 			       (int)write_resp.error);
-			delete[]send_cmd;
+			free(send_cmd);
 			return -(write_resp.error);
 		}
 		bytes_left -= write_resp.size;
 	} while (bytes_left > 0);
 #endif
-	delete[]send_cmd;
+	free(send_cmd);
 
 	return 0;
 }
@@ -461,11 +464,11 @@ int vxi11_send_data_block(VXI11_CLINK * clink, const char *cmd, char *buffer,
 	int cmd_len = strlen(cmd);
 	int ret;
 
-	out_buffer = new char[cmd_len + 10 + len];
+	out_buffer = (char *)malloc(cmd_len + 10 + len);
 	sprintf(out_buffer, "%s#8%08lu", cmd, len);
 	memcpy(out_buffer + cmd_len + 10, buffer, (unsigned long)len);
 	ret = vxi11_send(clink, out_buffer, (unsigned long)(cmd_len + 10 + len));
-	delete[]out_buffer;
+	free(out_buffer);
 	return ret;
 }
 
@@ -495,7 +498,7 @@ long vxi11_receive_data_block(VXI11_CLINK * clink, char *buffer,
 	int l;
 	char scan_cmd[20];
 	necessary_buffer_size = len + 12;
-	in_buffer = new char[necessary_buffer_size];
+	in_buffer = (char *)malloc(necessary_buffer_size);
 	ret = vxi11_receive(clink, in_buffer, necessary_buffer_size, timeout);
 	if (ret < 0) {
 		return ret;
@@ -518,7 +521,7 @@ long vxi11_receive_data_block(VXI11_CLINK * clink, char *buffer,
 		sprintf(scan_cmd, "#%%1d%%%dlu", ndigits);
 		sscanf(in_buffer, scan_cmd, &ndigits, &returned_bytes);
 		memcpy(buffer, in_buffer + (ndigits + 2), returned_bytes);
-		delete[]in_buffer;
+		free(in_buffer);
 		return (long)returned_bytes;
 	} else {
 		return 0;
