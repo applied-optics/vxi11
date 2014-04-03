@@ -36,8 +36,8 @@
 int main(int argc, char *argv[])
 {
 
-	static char *device_ip;
-	static char *device_name;
+	char *device_ip;
+	char *device_name = NULL;
 	char cmd[256];
 	char buf[BUF_LEN];
 	int ret;
@@ -52,10 +52,8 @@ int main(int argc, char *argv[])
 	device_ip = argv[1];
 	if (argc > 2) {
 		device_name = argv[2];
-		clink = vxi11_open_device(device_ip, device_name);
-	} else {
-		clink = vxi11_open_device(device_ip);
 	}
+	clink = vxi11_open_device(device_ip, device_name);
 
 	if (!clink) {
 		printf("Error: could not open device %s, quitting\n",
