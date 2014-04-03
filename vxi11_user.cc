@@ -465,6 +465,9 @@ int vxi11_send_data_block(VXI11_CLINK * clink, const char *cmd, char *buffer,
 	int ret;
 
 	out_buffer = (char *)malloc(cmd_len + 10 + len);
+	if (!out_buffer) {
+		return 1;
+	}
 	sprintf(out_buffer, "%s#8%08lu", cmd, len);
 	memcpy(out_buffer + cmd_len + 10, buffer, (unsigned long)len);
 	ret = vxi11_send(clink, out_buffer, (unsigned long)(cmd_len + 10 + len));
@@ -499,6 +502,9 @@ long vxi11_receive_data_block(VXI11_CLINK * clink, char *buffer,
 	char scan_cmd[20];
 	necessary_buffer_size = len + 12;
 	in_buffer = (char *)malloc(necessary_buffer_size);
+	if (!in_buffer) {
+		return -1;
+	}
 	ret = vxi11_receive(clink, in_buffer, necessary_buffer_size, timeout);
 	if (ret < 0) {
 		return ret;
