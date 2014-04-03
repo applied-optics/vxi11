@@ -43,19 +43,6 @@
 #  include "vxi11.h"
 #endif
 
-#define	VXI11_CLIENT		CLIENT
-#define	VXI11_LINK		Create_LinkResp
-
-struct _CLINK {
-#ifdef WIN32
-	ViSession rm;
-	ViSession session;
-#else
-	VXI11_CLIENT *client;
-	VXI11_LINK *link;
-#endif
-} ;
-
 typedef	struct _CLINK CLINK;
 
 #define	VXI11_DEFAULT_TIMEOUT	10000	/* in ms */
