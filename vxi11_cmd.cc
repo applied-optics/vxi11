@@ -41,7 +41,7 @@ char		cmd[256];
 char		buf[BUF_LEN];
 int		ret;
 long		bytes_returned;
-CLINK		*clink;
+VXI11_CLINK		*clink;
 
 	if (argc < 2) {
 		printf("usage: %s your.inst.ip.addr [device_name]\n",argv[0]);

@@ -36,7 +36,7 @@ int	main(int argc, char *argv[]) {
 
 static char	*device_ip;
 char		cmd[256];
-CLINK		*clink;
+VXI11_CLINK		*clink;
 
 	if (argc < 2) {
 		printf("usage: %s your.inst.ip.addr command\n",argv[0]);
