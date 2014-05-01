@@ -55,17 +55,17 @@ struct _VXI11_CLINK {
  *
  * VXI11_CLINK *vxi11_open_device(char *address, char *device)
  * int	vxi11_close_device(char *address, VXI11_CLINK *clink)
- * int	vxi11_send(VXI11_CLINK *clink, char *cmd, unsigned long len)
+ * int	vxi11_send(VXI11_CLINK *clink, char *cmd, size_t len)
  *    --- or --- (if sending just text)
  * int	vxi11_send(VXI11_CLINK *clink, char *cmd)
- * long	vxi11_receive(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout)
+ * long	vxi11_receive(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout)
  *
  * There are then useful (to me, anyway) more specific functions built on top
  * of these:
  *
- * int	vxi11_send_data_block(VXI11_CLINK *clink, char *cmd, char *buffer, unsigned long len)
- * long	vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout)
- * long	vxi11_send_and_receive(VXI11_CLINK *clink, char *cmd, char *buf, unsigned long buf_len, unsigned long timeout)
+ * int	vxi11_send_data_block(VXI11_CLINK *clink, char *cmd, char *buffer, size_t len)
+ * long	vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout)
+ * long	vxi11_send_and_receive(VXI11_CLINK *clink, char *cmd, char *buf, size_t len, unsigned long timeout)
  * long	vxi11_obtain_long_value(VXI11_CLINK *clink, char *cmd, unsigned long timeout)
  * double vxi11_obtain_double_value(VXI11_CLINK *clink, char *cmd, unsigned long timeout)
  */
@@ -263,7 +263,7 @@ int vxi11_close_device(VXI11_CLINK * clink, const char *address)
 /* SEND FUNCTIONS *
  * ============== */
 
-int vxi11_send(VXI11_CLINK * clink, const char *cmd, unsigned long len)
+int vxi11_send(VXI11_CLINK * clink, const char *cmd, size_t len)
 {
 #ifdef WIN32
 	ViStatus status;
@@ -362,7 +362,7 @@ int vxi11_send(VXI11_CLINK * clink, const char *cmd, unsigned long len)
 #define RCV_CHR_BIT	0x02	// A termchr is set in flags and a character which matches termChar is transferred
 #define RCV_REQCNT_BIT	0x01	// requestSize bytes have been transferred.  This includes a request size of zero.
 
-long vxi11_receive(VXI11_CLINK * clink, char *buffer, unsigned long len,
+long vxi11_receive(VXI11_CLINK * clink, char *buffer, size_t len,
 		   unsigned long timeout)
 {
 	unsigned long curr_pos = 0;
@@ -437,10 +437,10 @@ long vxi11_receive(VXI11_CLINK * clink, char *buffer, unsigned long len,
 /* SEND FIXED LENGTH DATA BLOCK FUNCTION *
  * ===================================== */
 int vxi11_send_data_block(VXI11_CLINK * clink, const char *cmd, char *buffer,
-			  unsigned long len)
+			  size_t len)
 {
 	char *out_buffer;
-	int cmd_len = strlen(cmd);
+	size_t cmd_len = strlen(cmd);
 	int ret;
 
 	out_buffer = (char *)malloc(cmd_len + 10 + len);
@@ -448,8 +448,8 @@ int vxi11_send_data_block(VXI11_CLINK * clink, const char *cmd, char *buffer,
 		return 1;
 	}
 	sprintf(out_buffer, "%s#8%08lu", cmd, len);
-	memcpy(out_buffer + cmd_len + 10, buffer, (unsigned long)len);
-	ret = vxi11_send(clink, out_buffer, (unsigned long)(cmd_len + 10 + len));
+	memcpy(out_buffer + cmd_len + 10, buffer, len);
+	ret = vxi11_send(clink, out_buffer, cmd_len + 10 + len);
 	free(out_buffer);
 	return ret;
 }
@@ -468,7 +468,7 @@ int vxi11_send_data_block(VXI11_CLINK * clink, const char *cmd, char *buffer,
  *   \---------- always starts with #
  */
 long vxi11_receive_data_block(VXI11_CLINK * clink, char *buffer,
-			      unsigned long len, unsigned long timeout)
+			      size_t len, unsigned long timeout)
 {
 /* I'm not sure what the maximum length of this header is, I'll assume it's 
  * 11 (#9 + 9 digits) */
@@ -519,7 +519,7 @@ long vxi11_receive_data_block(VXI11_CLINK * clink, char *buffer,
 /* This is mainly a useful function for the overloaded vxi11_obtain_value()
  * fn's, but is also handy and useful for user and library use */
 long vxi11_send_and_receive(VXI11_CLINK * clink, const char *cmd, char *buf,
-			    unsigned long buf_len, unsigned long timeout)
+			    size_t len, unsigned long timeout)
 {
 	int ret;
 	long bytes_returned;
@@ -538,7 +538,7 @@ long vxi11_send_and_receive(VXI11_CLINK * clink, const char *cmd, char *buf,
 			}
 		}
 
-		bytes_returned = vxi11_receive(clink, buf, buf_len, timeout);
+		bytes_returned = vxi11_receive(clink, buf, len, timeout);
 		if (bytes_returned <= 0) {
 			if (bytes_returned > -VXI11_NULL_READ_RESP) {
 				printf

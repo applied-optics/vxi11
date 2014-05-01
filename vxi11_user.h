@@ -45,25 +45,30 @@
 
 typedef	struct _VXI11_CLINK VXI11_CLINK;
 
-#define	VXI11_DEFAULT_TIMEOUT	10000	/* in ms */
-#define	VXI11_READ_TIMEOUT	2000	/* in ms */
-#define	VXI11_NULL_READ_RESP	50	/* vxi11_receive() return value if a query
-					 * times out ON THE INSTRUMENT (and so we have
-					 * to resend the query again) */
-#define	VXI11_NULL_WRITE_RESP	51	/* vxi11_send() return value if a sent command
-					 * times out ON THE INSTURMENT. */
+/* Default timeout value to use, in ms. */
+#define	VXI11_DEFAULT_TIMEOUT	10000
+
+/* Read timeout to use, in ms. */
+#define	VXI11_READ_TIMEOUT	2000
+
+/* vxi11_receive() return value if a query times out ON THE INSTRUMENT (and so
+ * we have to resend the query). */
+#define	VXI11_NULL_READ_RESP	50
+
+/* vxi11_send() return value if a sent command times out ON THE INSTRUMENT. */
+#define	VXI11_NULL_WRITE_RESP	51
 
 
 /* The four main functions: open, close, send, receieve (plus a couple of wrappers) */
 vx_EXPORT int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device);
 vx_EXPORT int vxi11_close_device(VXI11_CLINK *clink, const char *address);
-vx_EXPORT int vxi11_send(VXI11_CLINK *clink, const char *cmd, unsigned long len);
-vx_EXPORT long vxi11_receive(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout);
+vx_EXPORT int vxi11_send(VXI11_CLINK *clink, const char *cmd, size_t len);
+vx_EXPORT long vxi11_receive(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout);
 
 /* Utility functions, that use send() and receive(). Use these too. */
-vx_EXPORT int vxi11_send_data_block(VXI11_CLINK *clink, const char *cmd, char *buffer, unsigned long len);
-vx_EXPORT long vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout);
-vx_EXPORT long vxi11_send_and_receive(VXI11_CLINK *clink, const char *cmd, char *buf, unsigned long buf_len, unsigned long timeout);
+vx_EXPORT int vxi11_send_data_block(VXI11_CLINK *clink, const char *cmd, char *buffer, size_t len);
+vx_EXPORT long vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout);
+vx_EXPORT long vxi11_send_and_receive(VXI11_CLINK *clink, const char *cmd, char *buf, size_t len, unsigned long timeout);
 vx_EXPORT long vxi11_obtain_long_value(VXI11_CLINK *clink, const char *cmd, unsigned long timeout);
 vx_EXPORT double vxi11_obtain_double_value(VXI11_CLINK *clink, const char *cmd, unsigned long timeout);
 
