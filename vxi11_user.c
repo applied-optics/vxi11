@@ -263,6 +263,11 @@ int vxi11_close_device(VXI11_CLINK * clink, const char *address)
 /* SEND FUNCTIONS *
  * ============== */
 
+int vxi11_send_str(VXI11_CLINK * clink, const char *cmd)
+{
+	return vxi11_send(clink, cmd, strlen(cmd));
+}
+
 int vxi11_send(VXI11_CLINK * clink, const char *cmd, size_t len)
 {
 #ifdef WIN32
@@ -362,7 +367,12 @@ int vxi11_send(VXI11_CLINK * clink, const char *cmd, size_t len)
 #define RCV_CHR_BIT	0x02	// A termchr is set in flags and a character which matches termChar is transferred
 #define RCV_REQCNT_BIT	0x01	// requestSize bytes have been transferred.  This includes a request size of zero.
 
-long vxi11_receive(VXI11_CLINK * clink, char *buffer, size_t len,
+long vxi11_receive(VXI11_CLINK * clink, char *buffer, size_t len)
+{
+	return vxi11_receive_timeout(clink, buffer, len, VXI11_READ_TIMEOUT);
+}
+
+long vxi11_receive_timeout(VXI11_CLINK * clink, char *buffer, size_t len,
 		   unsigned long timeout)
 {
 	unsigned long curr_pos = 0;
@@ -484,7 +494,7 @@ long vxi11_receive_data_block(VXI11_CLINK * clink, char *buffer,
 	if (!in_buffer) {
 		return -1;
 	}
-	ret = vxi11_receive(clink, in_buffer, necessary_buffer_size, timeout);
+	ret = vxi11_receive_timeout(clink, in_buffer, necessary_buffer_size, timeout);
 	if (ret < 0) {
 		return ret;
 	}
@@ -538,7 +548,7 @@ long vxi11_send_and_receive(VXI11_CLINK * clink, const char *cmd, char *buf,
 			}
 		}
 
-		bytes_returned = vxi11_receive(clink, buf, len, timeout);
+		bytes_returned = vxi11_receive_timeout(clink, buf, len, timeout);
 		if (bytes_returned <= 0) {
 			if (bytes_returned > -VXI11_NULL_READ_RESP) {
 				printf
@@ -557,7 +567,12 @@ long vxi11_send_and_receive(VXI11_CLINK * clink, const char *cmd, char *buf,
 
 /* FUNCTIONS TO RETURN A LONG INTEGER VALUE SENT AS RESPONSE TO A QUERY *
  * ==================================================================== */
-long vxi11_obtain_long_value(VXI11_CLINK * clink, const char *cmd,
+long vxi11_obtain_long_value(VXI11_CLINK * clink, const char *cmd)
+{
+	return vxi11_obtain_long_value_timeout(clink, cmd, VXI11_READ_TIMEOUT);
+}
+
+long vxi11_obtain_long_value_timeout(VXI11_CLINK * clink, const char *cmd,
 			     unsigned long timeout)
 {
 	char buf[50];		/* 50=arbitrary length... more than enough for one number in ascii */
@@ -571,7 +586,12 @@ long vxi11_obtain_long_value(VXI11_CLINK * clink, const char *cmd,
 
 /* FUNCTIONS TO RETURN A DOUBLE FLOAT VALUE SENT AS RESPONSE TO A QUERY *
  * ==================================================================== */
-double vxi11_obtain_double_value(VXI11_CLINK * clink, const char *cmd,
+double vxi11_obtain_double_value(VXI11_CLINK * clink, const char *cmd)
+{
+	return vxi11_obtain_double_value_timeout(clink, cmd, VXI11_READ_TIMEOUT);
+}
+
+double vxi11_obtain_double_value_timeout(VXI11_CLINK * clink, const char *cmd,
 				 unsigned long timeout)
 {
 	char buf[50];		/* 50=arbitrary length... more than enough for one number in ascii */

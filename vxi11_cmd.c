@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 			break;
 		}
 		if (strstr(cmd, "?") != 0) {
-			bytes_returned = vxi11_receive(clink, buf, BUF_LEN, VXI11_DEFAULT_TIMEOUT);
+			bytes_returned = vxi11_receive(clink, buf, BUF_LEN);
 			if (bytes_returned > 0) {
 				printf("%s\n", buf);
 			} else if (bytes_returned == -15) {
