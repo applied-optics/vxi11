@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 	}
 
 	device_ip = argv[1];
-	if(vxi11_open_device(&clink, device_ip)){
+	if(vxi11_open_device(&clink, device_ip, NULL)){
 		printf("Error: could not open device %s, quitting\n",
 		       device_ip);
 		exit(2);
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 
 	memset(cmd, 0, 256);	// initialize command string
 	strncpy(cmd, argv[2], 256);
-	vxi11_send(clink, cmd);
+	vxi11_send(clink, cmd, strlen(cmd));
 	vxi11_close_device(clink, device_ip);
 	return 0;
 }

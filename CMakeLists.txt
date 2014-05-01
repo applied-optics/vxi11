@@ -21,7 +21,7 @@ endif (NOT WIN32)
 # Shared library for vxi11
 # ==================================================
 
-set(vxi11_SRCS vxi11_user.cc vxi11_user.h)
+set(vxi11_SRCS vxi11_user.c vxi11_user.h)
 if (WIN32)
 	include_directories(C:\\VXIpnp\\WINNT\\include)
 	link_directories(C:\\VXIpnp\\WINNT\\lib\\msc)
@@ -50,5 +50,8 @@ endif (CYGWIN)
 # Command line utility
 # ==================================================
 
-add_executable(vxi11_cmd vxi11_cmd.cc)
+add_executable(vxi11_cmd vxi11_cmd.c)
 target_link_libraries(vxi11_cmd vxi11)
+
+add_executable(vxi11_send vxi11_send.c)
+target_link_libraries(vxi11_send vxi11)

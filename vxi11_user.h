@@ -55,20 +55,16 @@ typedef	struct _VXI11_CLINK VXI11_CLINK;
 
 
 /* The four main functions: open, close, send, receieve (plus a couple of wrappers) */
-vx_EXPORT int vxi11_open_device(VXI11_CLINK **clink, const char *address);
 vx_EXPORT int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device);
-vx_EXPORT int vxi11_open_device(VXI11_CLINK *clink, const char *address);
-vx_EXPORT int vxi11_open_device(VXI11_CLINK *clink, const char *address, char *device);
 vx_EXPORT int vxi11_close_device(VXI11_CLINK *clink, const char *address);
-vx_EXPORT int vxi11_send(VXI11_CLINK *clink, const char *cmd);
 vx_EXPORT int vxi11_send(VXI11_CLINK *clink, const char *cmd, unsigned long len);
-vx_EXPORT long vxi11_receive(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout=VXI11_READ_TIMEOUT);
+vx_EXPORT long vxi11_receive(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout);
 
 /* Utility functions, that use send() and receive(). Use these too. */
 vx_EXPORT int vxi11_send_data_block(VXI11_CLINK *clink, const char *cmd, char *buffer, unsigned long len);
-vx_EXPORT long vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout=VXI11_READ_TIMEOUT);
-vx_EXPORT long vxi11_send_and_receive(VXI11_CLINK *clink, const char *cmd, char *buf, unsigned long buf_len, unsigned long timeout=VXI11_READ_TIMEOUT);
-vx_EXPORT long vxi11_obtain_long_value(VXI11_CLINK *clink, const char *cmd, unsigned long timeout=VXI11_READ_TIMEOUT);
-vx_EXPORT double vxi11_obtain_double_value(VXI11_CLINK *clink, const char *cmd, unsigned long timeout=VXI11_READ_TIMEOUT);
+vx_EXPORT long vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout);
+vx_EXPORT long vxi11_send_and_receive(VXI11_CLINK *clink, const char *cmd, char *buf, unsigned long buf_len, unsigned long timeout);
+vx_EXPORT long vxi11_obtain_long_value(VXI11_CLINK *clink, const char *cmd, unsigned long timeout);
+vx_EXPORT double vxi11_obtain_double_value(VXI11_CLINK *clink, const char *cmd, unsigned long timeout);
 
 #endif

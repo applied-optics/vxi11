@@ -107,21 +107,6 @@ static int _vxi11_close_link(VXI11_CLINK * clink, const char *address);
  * used multiple times for the same device (the library will keep track).*/
 int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device)
 {
-	*clink = (VXI11_CLINK *) calloc(1, sizeof(VXI11_CLINK));
-	if (!(*clink)) {
-		return 1;
-	}
-
-	if (vxi11_open_device(*clink, address, device)) {
-		free(*clink);
-		*clink = NULL;
-		return 1;
-	}
-	return 0;
-}
-
-int vxi11_open_device(VXI11_CLINK * clink, const char *address, char *device)
-{
 #ifdef WIN32
 	ViStatus status;
 	char buf[256];
@@ -129,20 +114,38 @@ int vxi11_open_device(VXI11_CLINK * clink, const char *address, char *device)
 	int ret;
 	struct _vxi11_client_t *tail, *client = NULL;
 #endif
+	char default_device[6] = "inst0";
+	char *use_device;
+
+	if(device){
+		use_device = device;
+	}else{
+		use_device = default_device;
+	}
+
+	*clink = (VXI11_CLINK *) calloc(1, sizeof(VXI11_CLINK));
+	if (!(*clink)) {
+		return 1;
+	}
 
 #ifdef WIN32
 	status = viOpenDefaultRM(&clink->rm);
 	if (status != VI_SUCCESS) {
 		viStatusDesc(NULL, status, buf);
 		printf("%s\n", buf);
+		free(*clink);
+		*clink = NULL;
+		return 1;
 	}
 	viOpen(clink->rm, (char *)address, VI_NULL, VI_NULL, &clink->session);
 	if (status != VI_SUCCESS) {
 		viStatusDesc(clink->rm, status, buf);
 		printf("%s\n", buf);
+		free(*clink);
+		*clink = NULL;
+		return 1;
 	}
 #else
-//      printf("before doing anything, clink->link = %ld\n", clink->link);
 	/* Have a look to see if we've already initialised an instrument with
 	 * this address */
 	tail = VXI11_CLIENTS;
@@ -162,59 +165,45 @@ int vxi11_open_device(VXI11_CLINK * clink, const char *address, char *device)
 		 * opened so we don't run out of storage space. */
 		client = (struct _vxi11_client_t *)calloc(1, sizeof(struct _vxi11_client_t));
 		if (!client) {
+			free(*clink);
+			*clink = NULL;
 			return 1;
 		}
 
-		clink->client =
+		(*clink)->client =
 		    clnt_create(address, DEVICE_CORE, DEVICE_CORE_VERSION,
 				"tcp");
 
-		if (clink->client == NULL) {
+		if ((*clink)->client == NULL) {
 			clnt_pcreateerror(address);
+			free(client);
+			free(*clink);
+			*clink = NULL;
 			return 1;
 		}
-		ret = _vxi11_open_link(clink, address, device);
+		ret = _vxi11_open_link(*clink, address, device);
 		if (ret != 0) {
-			clnt_destroy(clink->client);
+			clnt_destroy((*clink)->client);
+			free(client);
+			free(*clink);
+			*clink = NULL;
 			return 1;
 		}
 
 		strncpy(client->address, address, 20);
-		client->client_address = clink->client;
+		client->client_address = (*clink)->client;
 		client->link_count = 1;
 		client->next = VXI11_CLIENTS;
 		VXI11_CLIENTS = client;
 	} else {
 		/* Copy the client pointer address. Just establish a new link
 		 *  not a new client). Add one to the link count */
-		clink->client = client->client_address;
-		ret = _vxi11_open_link(clink, address, device);
+		(*clink)->client = client->client_address;
+		ret = _vxi11_open_link((*clink), address, device);
 		client->link_count++;
 	}
 #endif
-//      printf("after creating link, clink->link = %ld\n", clink->link);
 	return 0;
-}
-
-/* This is a wrapper function, used for the situations where there is only one
- * "device" per client. This is the case for most (if not all) VXI11
- * instruments; however, it is _not_ the case for devices such as LAN to GPIB
- * gateways. These are single clients that communicate to many instruments
- * (devices). In order to differentiate between them, we need to pass a device
- * name. This gets used in the _vxi11_open_link() fn, as the link_parms.device
- * value. */
-int vxi11_open_device(const char *address, VXI11_CLINK * clink)
-{
-	char device[6];
-	strncpy(device, "inst0", 6);
-	return vxi11_open_device(clink, address, device);
-}
-
-int vxi11_open_device(VXI11_CLINK **clink, const char *address)
-{
-	char device[6];
-	strncpy(device, "inst0", 6);
-	return vxi11_open_device(clink, address, device);
 }
 
 /* CLOSE FUNCTION *
@@ -274,15 +263,6 @@ int vxi11_close_device(VXI11_CLINK * clink, const char *address)
 /* SEND FUNCTIONS *
  * ============== */
 
-/* A _lot_ of the time we are sending text strings, and can safely rely on
- * strlen(cmd). */
-int vxi11_send(VXI11_CLINK * clink, const char *cmd)
-{
-	return vxi11_send(clink, cmd, strlen(cmd));
-}
-
-/* We still need the version of the function where the length is set explicitly
- * though, for when we are sending fixed length data blocks. */
 int vxi11_send(VXI11_CLINK * clink, const char *cmd, unsigned long len)
 {
 #ifdef WIN32
@@ -544,7 +524,7 @@ long vxi11_send_and_receive(VXI11_CLINK * clink, const char *cmd, char *buf,
 	int ret;
 	long bytes_returned;
 	do {
-		ret = vxi11_send(clink, cmd);
+		ret = vxi11_send(clink, cmd, strlen(cmd));
 		if (ret != 0) {
 			if (ret != -VXI11_NULL_WRITE_RESP) {
 				printf

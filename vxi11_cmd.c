@@ -69,11 +69,11 @@ int main(int argc, char *argv[])
 			break;
 		}
 
-		if (vxi11_send(clink, cmd) < 0) {
+		if (vxi11_send(clink, cmd, strlen(cmd)) < 0) {
 			break;
 		}
 		if (strstr(cmd, "?") != 0) {
-			bytes_returned = vxi11_receive(clink, buf, BUF_LEN);
+			bytes_returned = vxi11_receive(clink, buf, BUF_LEN, VXI11_DEFAULT_TIMEOUT);
 			if (bytes_returned > 0) {
 				printf("%s\n", buf);
 			} else if (bytes_returned == -15) {
