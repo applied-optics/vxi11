@@ -92,9 +92,9 @@ struct _vxi11_client_t {
 static struct _vxi11_client_t *VXI11_CLIENTS = NULL;
 
 /* Internal function declarations. */
-static int _vxi11_open_link(const char *address, VXI11_CLINK * clink,
+static int _vxi11_open_link(VXI11_CLINK * clink, const char *address,
 			    char *device);
-static int _vxi11_close_link(const char *address, VXI11_CLINK * clink);
+static int _vxi11_close_link(VXI11_CLINK * clink, const char *address);
 
 /*****************************************************************************
  * KEY USER FUNCTIONS - USE THESE FROM YOUR PROGRAMS OR INSTRUMENT LIBRARIES *
@@ -114,14 +114,14 @@ VXI11_CLINK *vxi11_open_device(const char *address, char *device)
 		return NULL;
 	}
 
-	if (vxi11_open_device(address, clink, device)) {
+	if (vxi11_open_device(clink, address, device)) {
 		free(clink);
 		clink = NULL;
 	}
 	return clink;
 }
 
-int vxi11_open_device(const char *address, VXI11_CLINK * clink, char *device)
+int vxi11_open_device(VXI11_CLINK * clink, const char *address, char *device)
 {
 #ifdef WIN32
 	ViStatus status;
@@ -174,7 +174,7 @@ int vxi11_open_device(const char *address, VXI11_CLINK * clink, char *device)
 			clnt_pcreateerror(address);
 			return 1;
 		}
-		ret = _vxi11_open_link(address, clink, device);
+		ret = _vxi11_open_link(clink, address, device);
 		if (ret != 0) {
 			clnt_destroy(clink->client);
 			return 1;
@@ -189,7 +189,7 @@ int vxi11_open_device(const char *address, VXI11_CLINK * clink, char *device)
 		/* Copy the client pointer address. Just establish a new link
 		 *  not a new client). Add one to the link count */
 		clink->client = client->client_address;
-		ret = _vxi11_open_link(address, clink, device);
+		ret = _vxi11_open_link(clink, address, device);
 		client->link_count++;
 	}
 #endif
@@ -208,7 +208,7 @@ int vxi11_open_device(const char *address, VXI11_CLINK * clink)
 {
 	char device[6];
 	strncpy(device, "inst0", 6);
-	return vxi11_open_device(address, clink, device);
+	return vxi11_open_device(clink, address, device);
 }
 
 VXI11_CLINK *vxi11_open_device(const char *address)
@@ -223,7 +223,7 @@ VXI11_CLINK *vxi11_open_device(const char *address)
 
 /* Use this function from user land to close a device and/or sever a link. Can
  * be used multiple times for the same device (the library will keep track).*/
-int vxi11_close_device(const char *address, VXI11_CLINK * clink)
+int vxi11_close_device(VXI11_CLINK * clink, const char *address)
 {
 	int ret = 0;
 #ifdef WIN32
@@ -252,13 +252,13 @@ int vxi11_close_device(const char *address, VXI11_CLINK * clink)
 	} else {		/* Found the address, there's more than one link to that instrument,
 				 * so keep track and just close the link */
 		if (client->link_count > 1) {
-			ret = _vxi11_close_link(address, clink);
+			ret = _vxi11_close_link(clink, address);
 			client->link_count--;
 		}
 		/* Found the address, it's the last link, so close the device (link
 		 * AND client) */
 		else {
-			ret = _vxi11_close_link(address, clink);
+			ret = _vxi11_close_link(clink, address);
 			clnt_destroy(clink->client);
 
 			if (last) {
@@ -614,7 +614,7 @@ double vxi11_obtain_double_value(VXI11_CLINK * clink, const char *cmd,
 /* OPEN FUNCTIONS *
  * ============== */
 
-static int _vxi11_open_link(const char *address, VXI11_CLINK * clink,
+static int _vxi11_open_link(VXI11_CLINK * clink, const char *address,
 			    char *device)
 {
 #ifndef WIN32
@@ -640,7 +640,7 @@ static int _vxi11_open_link(const char *address, VXI11_CLINK * clink,
 /* CLOSE FUNCTIONS *
  * =============== */
 
-static int _vxi11_close_link(const char *address, VXI11_CLINK * clink)
+static int _vxi11_close_link(VXI11_CLINK * clink, const char *address)
 {
 #ifndef WIN32
 	Device_Error dev_error;

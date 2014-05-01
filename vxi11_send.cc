@@ -56,6 +56,6 @@ int main(int argc, char *argv[])
 	memset(cmd, 0, 256);	// initialize command string
 	strncpy(cmd, argv[2], 256);
 	vxi11_send(clink, cmd);
-	vxi11_close_device(device_ip, clink);
+	vxi11_close_device(clink, device_ip);
 	return 0;
 }

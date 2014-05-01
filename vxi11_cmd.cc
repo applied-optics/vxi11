@@ -86,6 +86,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	ret = vxi11_close_device(device_ip, clink);
+	ret = vxi11_close_device(clink, device_ip);
 	return 0;
 }

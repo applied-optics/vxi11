@@ -57,9 +57,9 @@ typedef	struct _VXI11_CLINK VXI11_CLINK;
 /* The four main functions: open, close, send, receieve (plus a couple of wrappers) */
 vx_EXPORT VXI11_CLINK *vxi11_open_device(const char *address);
 vx_EXPORT VXI11_CLINK *vxi11_open_device(const char *address, char *device);
-vx_EXPORT int vxi11_open_device(const char *address, VXI11_CLINK *clink);
-vx_EXPORT int vxi11_open_device(const char *address, VXI11_CLINK *clink, char *device);
-vx_EXPORT int vxi11_close_device(const char *address, VXI11_CLINK *clink);
+vx_EXPORT int vxi11_open_device(VXI11_CLINK *clink, const char *address);
+vx_EXPORT int vxi11_open_device(VXI11_CLINK *clink, const char *address, char *device);
+vx_EXPORT int vxi11_close_device(VXI11_CLINK *clink, const char *address);
 vx_EXPORT int vxi11_send(VXI11_CLINK *clink, const char *cmd);
 vx_EXPORT int vxi11_send(VXI11_CLINK *clink, const char *cmd, unsigned long len);
 vx_EXPORT long vxi11_receive(VXI11_CLINK *clink, char *buffer, unsigned long len, unsigned long timeout=VXI11_READ_TIMEOUT);
