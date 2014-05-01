@@ -105,20 +105,19 @@ static int _vxi11_close_link(VXI11_CLINK * clink, const char *address);
 
 /* Use this function from user land to open a device and create a link. Can be
  * used multiple times for the same device (the library will keep track).*/
-VXI11_CLINK *vxi11_open_device(const char *address, char *device)
+int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device)
 {
-	VXI11_CLINK *clink = NULL;
-
-	clink = (VXI11_CLINK *) calloc(1, sizeof(VXI11_CLINK));
-	if (!clink) {
-		return NULL;
+	*clink = (VXI11_CLINK *) calloc(1, sizeof(VXI11_CLINK));
+	if (!(*clink)) {
+		return 1;
 	}
 
-	if (vxi11_open_device(clink, address, device)) {
-		free(clink);
-		clink = NULL;
+	if (vxi11_open_device(*clink, address, device)) {
+		free(*clink);
+		*clink = NULL;
+		return 1;
 	}
-	return clink;
+	return 0;
 }
 
 int vxi11_open_device(VXI11_CLINK * clink, const char *address, char *device)
@@ -211,11 +210,11 @@ int vxi11_open_device(const char *address, VXI11_CLINK * clink)
 	return vxi11_open_device(clink, address, device);
 }
 
-VXI11_CLINK *vxi11_open_device(const char *address)
+int vxi11_open_device(VXI11_CLINK **clink, const char *address)
 {
 	char device[6];
 	strncpy(device, "inst0", 6);
-	return vxi11_open_device(address, device);
+	return vxi11_open_device(clink, address, device);
 }
 
 /* CLOSE FUNCTION *
