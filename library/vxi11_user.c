@@ -58,14 +58,14 @@ struct _VXI11_CLINK {
  * int	vxi11_send(VXI11_CLINK *clink, char *cmd, size_t len)
  *    --- or --- (if sending just text)
  * int	vxi11_send(VXI11_CLINK *clink, char *cmd)
- * long	vxi11_receive(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout)
+ * ssize_t	vxi11_receive(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout)
  *
  * There are then useful (to me, anyway) more specific functions built on top
  * of these:
  *
  * int	vxi11_send_data_block(VXI11_CLINK *clink, char *cmd, char *buffer, size_t len)
- * long	vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout)
- * long	vxi11_send_and_receive(VXI11_CLINK *clink, char *cmd, char *buf, size_t len, unsigned long timeout)
+ * ssize_t	vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout)
+ * int	vxi11_send_and_receive(VXI11_CLINK *clink, char *cmd, char *buf, size_t len, unsigned long timeout)
  * long	vxi11_obtain_long_value(VXI11_CLINK *clink, char *cmd, unsigned long timeout)
  * double vxi11_obtain_double_value(VXI11_CLINK *clink, char *cmd, unsigned long timeout)
  */
@@ -278,8 +278,8 @@ int vxi11_send(VXI11_CLINK * clink, const char *cmd, size_t len)
 	Device_WriteParms write_parms;
 	char *send_cmd;
 #endif
-	unsigned int bytes_left = len;
-	unsigned long write_count;
+	size_t bytes_left = len;
+	ssize_t write_count;
 
 #ifdef WIN32
 	send_cmd = (unsigned char *)malloc(len);
@@ -367,15 +367,15 @@ int vxi11_send(VXI11_CLINK * clink, const char *cmd, size_t len)
 #define RCV_CHR_BIT	0x02	// A termchr is set in flags and a character which matches termChar is transferred
 #define RCV_REQCNT_BIT	0x01	// requestSize bytes have been transferred.  This includes a request size of zero.
 
-long vxi11_receive(VXI11_CLINK * clink, char *buffer, size_t len)
+ssize_t vxi11_receive(VXI11_CLINK * clink, char *buffer, size_t len)
 {
 	return vxi11_receive_timeout(clink, buffer, len, VXI11_READ_TIMEOUT);
 }
 
-long vxi11_receive_timeout(VXI11_CLINK * clink, char *buffer, size_t len,
+ssize_t vxi11_receive_timeout(VXI11_CLINK * clink, char *buffer, size_t len,
 		   unsigned long timeout)
 {
-	unsigned long curr_pos = 0;
+	size_t curr_pos = 0;
 #ifdef WIN32
 	viRead(clink->session, (unsigned char *)buffer, len, &curr_pos);
 #else
@@ -477,16 +477,16 @@ int vxi11_send_data_block(VXI11_CLINK * clink, const char *cmd, char *buffer,
  *   |\--------- number of digits that follow (in this case 8, with leading 0's)
  *   \---------- always starts with #
  */
-long vxi11_receive_data_block(VXI11_CLINK * clink, char *buffer,
+ssize_t vxi11_receive_data_block(VXI11_CLINK * clink, char *buffer,
 			      size_t len, unsigned long timeout)
 {
 /* I'm not sure what the maximum length of this header is, I'll assume it's 
  * 11 (#9 + 9 digits) */
-	unsigned long necessary_buffer_size;
+	size_t necessary_buffer_size;
 	char *in_buffer;
 	int ret;
 	int ndigits;
-	unsigned long returned_bytes;
+	size_t returned_bytes;
 	int l;
 	char scan_cmd[20];
 	necessary_buffer_size = len + 12;
@@ -517,7 +517,7 @@ long vxi11_receive_data_block(VXI11_CLINK * clink, char *buffer,
 		sscanf(in_buffer, scan_cmd, &ndigits, &returned_bytes);
 		memcpy(buffer, in_buffer + (ndigits + 2), returned_bytes);
 		free(in_buffer);
-		return (long)returned_bytes;
+		return (ssize_t )returned_bytes;
 	} else {
 		return 0;
 	}
@@ -528,11 +528,11 @@ long vxi11_receive_data_block(VXI11_CLINK * clink, char *buffer,
 
 /* This is mainly a useful function for the overloaded vxi11_obtain_value()
  * fn's, but is also handy and useful for user and library use */
-long vxi11_send_and_receive(VXI11_CLINK * clink, const char *cmd, char *buf,
+int vxi11_send_and_receive(VXI11_CLINK * clink, const char *cmd, char *buf,
 			    size_t len, unsigned long timeout)
 {
 	int ret;
-	long bytes_returned;
+	ssize_t bytes_returned;
 	do {
 		ret = vxi11_send(clink, cmd, strlen(cmd));
 		if (ret != 0) {

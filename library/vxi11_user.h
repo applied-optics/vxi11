@@ -64,13 +64,13 @@ vx_EXPORT int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *
 vx_EXPORT int vxi11_close_device(VXI11_CLINK *clink, const char *address);
 vx_EXPORT int vxi11_send(VXI11_CLINK *clink, const char *cmd, size_t len);
 vx_EXPORT int vxi11_send_str(VXI11_CLINK * clink, const char *cmd);
-vx_EXPORT long vxi11_receive(VXI11_CLINK *clink, char *buffer, size_t len);
-vx_EXPORT long vxi11_receive_timeout(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout);
+vx_EXPORT ssize_t vxi11_receive(VXI11_CLINK *clink, char *buffer, size_t len);
+vx_EXPORT ssize_t vxi11_receive_timeout(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout);
 
 /* Utility functions, that use send() and receive(). Use these too. */
 vx_EXPORT int vxi11_send_data_block(VXI11_CLINK *clink, const char *cmd, char *buffer, size_t len);
-vx_EXPORT long vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout);
-vx_EXPORT long vxi11_send_and_receive(VXI11_CLINK *clink, const char *cmd, char *buf, size_t len, unsigned long timeout);
+vx_EXPORT ssize_t vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout);
+vx_EXPORT int vxi11_send_and_receive(VXI11_CLINK *clink, const char *cmd, char *buf, size_t len, unsigned long timeout);
 vx_EXPORT long vxi11_obtain_long_value(VXI11_CLINK *clink, const char *cmd);
 vx_EXPORT long vxi11_obtain_long_value_timeout(VXI11_CLINK *clink, const char *cmd, unsigned long timeout);
 vx_EXPORT double vxi11_obtain_double_value(VXI11_CLINK *clink, const char *cmd);
