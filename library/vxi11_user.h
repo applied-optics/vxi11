@@ -36,12 +36,7 @@
 #  define __stdcall
 #endif
 
-#ifdef WIN32
-#  include <visa.h>
-#else
-#  include <rpc/rpc.h>
-#  include "vxi11.h"
-#endif
+#include <stdio.h>
 
 typedef	struct _VXI11_CLINK VXI11_CLINK;
 
