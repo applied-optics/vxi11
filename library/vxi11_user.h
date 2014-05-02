@@ -36,7 +36,7 @@
 #  define __stdcall
 #endif
 
-#include <stdio.h>
+#include <stdlib.h>
 
 typedef	struct _VXI11_CLINK VXI11_CLINK;
 
