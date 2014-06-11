@@ -56,7 +56,7 @@ of ethernet-enabled instruments, such as oscilloscopes and function
 generators by manufacturers such as Agilent and Tektronix (amongst many
 others).
 
-(2) vxi11_user.cc (and vxi11_user.h)
+(2) vxi11_user.c (and vxi11_user.h)
 These are (fairly) friendly user libraries. At the core are 4 key functions:
 vxi11_open(), vxi11_close(), vxi11_send() and vxi11_receive(). These allow
 you to talk to your device. There are also some other functions that I
