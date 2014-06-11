@@ -25,6 +25,10 @@
 #ifndef	_VXI11_USER_H_
 #define	_VXI11_USER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef WIN32
 #  ifdef vxi11_EXPORTS
 #    define vx_EXPORT __declspec(dllexport)
@@ -70,5 +74,9 @@ vx_EXPORT long vxi11_obtain_long_value(VXI11_CLINK *clink, const char *cmd);
 vx_EXPORT long vxi11_obtain_long_value_timeout(VXI11_CLINK *clink, const char *cmd, unsigned long timeout);
 vx_EXPORT double vxi11_obtain_double_value(VXI11_CLINK *clink, const char *cmd);
 vx_EXPORT double vxi11_obtain_double_value_timeout(VXI11_CLINK *clink, const char *cmd, unsigned long timeout);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
