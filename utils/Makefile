@@ -22,7 +22,7 @@ clean:
 	rm -f *.o vxi11_cmd vxi11_send
 
 install: all
-	$(INSTALL) -d $(DESTDIR)${prefix)/bin/
+	$(INSTALL) -d $(DESTDIR)$(prefix)/bin/
 	$(INSTALL) vxi11_cmd $(DESTDIR)$(prefix)/bin/
 	$(INSTALL) vxi11_send $(DESTDIR)$(prefix)/bin/
 

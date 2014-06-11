@@ -26,6 +26,7 @@ clean:
 	rm -f *.o libvxi11.so.0 vxi11.h vxi11_svc.c vxi11_xdr.c vxi11_clnt.c TAGS
 
 install: all
+	$(INSTALL) -d $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/
 	$(INSTALL) libvxi11.so.0 $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/
 	ln -sf libvxi11.so.0 $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/libvxi11.so
 	$(INSTALL) vxi11_user.h $(DESTDIR)$(prefix)/include/
