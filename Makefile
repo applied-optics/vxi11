@@ -15,12 +15,6 @@ clean:
 install:
 	for d in ${DIRS}; do $(MAKE) -C $${d} install; done
 
-	$(INSTALL) vxi11_cmd $(DESTDIR)$(prefix)/bin/
-	$(INSTALL) vxi11_send $(DESTDIR)$(prefix)/bin/
-	$(INSTALL) libvxi11.so.0 $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/
-	ln -sf libvxi11.so.0 $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/libvxi11.so
-	$(INSTALL) vxi11.h vxi11_user.h $(DESTDIR)$(prefix)/include/
-
 dist : distclean
 	mkdir vxi11-$(VERSION)
 	cp -pr library utils vxi11-$(VERSION)/
