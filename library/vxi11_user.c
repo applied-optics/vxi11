@@ -53,11 +53,11 @@ struct _VXI11_CLINK {
  *
  * There are four functions at the heart of this library:
  *
- * VXI11_CLINK *vxi11_open_device(char *address, char *device)
- * int	vxi11_close_device(char *address, VXI11_CLINK *clink)
+ * int vxi11_open_device(VXI11_CLINK **clink, const char *address, const char *device)
+ * int	vxi11_close_device(VXI11_CLINK *clink, const char *address)
  * int	vxi11_send(VXI11_CLINK *clink, char *cmd, size_t len)
  *    --- or --- (if sending just text)
- * int	vxi11_send(VXI11_CLINK *clink, char *cmd)
+ * int	vxi11_send_str(VXI11_CLINK *clink, char *cmd)
  * ssize_t	vxi11_receive(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout)
  *
  * There are then useful (to me, anyway) more specific functions built on top
