@@ -9,10 +9,10 @@ DIRS=library utils
 all :
 	for d in ${DIRS}; do $(MAKE) -C $${d}; done
 
-clean:
+clean :
 	for d in ${DIRS}; do $(MAKE) -C $${d} clean; done
 
-install:
+install : all
 	for d in ${DIRS}; do $(MAKE) -C $${d} install; done
 
 dist : distclean
