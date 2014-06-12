@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
-vxi11_x.xx - x/xx/xxxx
+vxi11_1.11 - 2014-06-12
 
 vxi11_user code is now compiled as a shared library.
 
@@ -23,6 +23,8 @@ required dependencies for compiling on Cygwin.
 Everything is now compiled as C rather than C++ to allow use in a wider
 variety of software. This has meant the polymorphism and functions with
 default arguments have been removed.
+
+Added vxi11_send_sprintf().
 
 ------------------------------------------------------------------------------
 vxi11_1.10 - 9/09/2010

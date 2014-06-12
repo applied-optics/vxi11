@@ -22,10 +22,12 @@
  * The author's email address is steve.sharples@nottingham.ac.uk
  */
 
-#include "vxi11_user.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "vxi11_user.h"
 
 #ifdef WIN32
 #  include <visa.h>
@@ -58,6 +60,7 @@ struct _VXI11_CLINK {
  * int	vxi11_send(VXI11_CLINK *clink, char *cmd, size_t len)
  *    --- or --- (if sending just text)
  * int	vxi11_send_str(VXI11_CLINK *clink, char *cmd)
+ * int  vxi11_send_sprintf(VXI11_CLINK *clink, char *format, ...)
  * ssize_t	vxi11_receive(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout)
  *
  * There are then useful (to me, anyway) more specific functions built on top
@@ -266,6 +269,32 @@ int vxi11_close_device(VXI11_CLINK * clink, const char *address)
 int vxi11_send_str(VXI11_CLINK * clink, const char *cmd)
 {
 	return vxi11_send(clink, cmd, strlen(cmd));
+}
+
+int vxi11_send_sprintf(VXI11_CLINK * clink, const char *format, ...)
+{ 
+	int len;
+	char *s;
+	int rc;
+	va_list va;
+    
+	len = strlen(format) + 500;
+
+	s = malloc(len*sizeof(char));
+	if(!s){
+		return -1;
+	}
+
+	va_start(va, format);
+	rc = vsnprintf(s, len, format, va);
+	va_end(va);
+	if(rc < 0){
+		free(s);
+		return rc;
+	}
+	s[len-1] = '\0'; /* Ensure string is null terminated. */
+
+	return vxi11_send(clink, s, strlen(s));
 }
 
 int vxi11_send(VXI11_CLINK * clink, const char *cmd, size_t len)
