@@ -6,7 +6,7 @@ READ_TIMEOUT = 2000
 NULL_READ_RESP = 50
 NULL_WRITE_RESP = 51
 
-class Vxi11:
+class Vxi11(object):
     def __init__(self, address, device="inst0"):
         if address is None or address == "":
             raise ValueError("address must be defined")
