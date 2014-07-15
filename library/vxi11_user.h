@@ -62,7 +62,6 @@ typedef	struct _VXI11_CLINK VXI11_CLINK;
 vx_EXPORT int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device);
 vx_EXPORT int vxi11_close_device(VXI11_CLINK *clink, const char *address);
 vx_EXPORT int vxi11_send(VXI11_CLINK *clink, const char *cmd, size_t len);
-vx_EXPORT int vxi11_send_str(VXI11_CLINK * clink, const char *cmd);
 vx_EXPORT int vxi11_send_sprintf(VXI11_CLINK *clink, const char *format, ...);
 vx_EXPORT ssize_t vxi11_receive(VXI11_CLINK *clink, char *buffer, size_t len);
 vx_EXPORT ssize_t vxi11_receive_timeout(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout);

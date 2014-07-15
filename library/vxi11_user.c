@@ -59,7 +59,6 @@ struct _VXI11_CLINK {
  * int	vxi11_close_device(VXI11_CLINK *clink, const char *address)
  * int	vxi11_send(VXI11_CLINK *clink, char *cmd, size_t len)
  *    --- or --- (if sending just text)
- * int	vxi11_send_str(VXI11_CLINK *clink, char *cmd)
  * int  vxi11_send_sprintf(VXI11_CLINK *clink, char *format, ...)
  * ssize_t	vxi11_receive(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout)
  *
@@ -265,11 +264,6 @@ int vxi11_close_device(VXI11_CLINK * clink, const char *address)
 
 /* SEND FUNCTIONS *
  * ============== */
-
-int vxi11_send_str(VXI11_CLINK * clink, const char *cmd)
-{
-	return vxi11_send(clink, cmd, strlen(cmd));
-}
 
 int vxi11_send_sprintf(VXI11_CLINK * clink, const char *format, ...)
 { 
