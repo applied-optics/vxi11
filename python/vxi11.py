@@ -43,16 +43,15 @@ class Vxi11(object):
     def send(self, cmd):
         c = cmd.encode()
         rc = _vxi11_send(self._clink, c_char_p(c), len(c))
-        if rc:
-            raise IOError("error sending to the device: "+str(rc))
-        return 0
+        return rc
 
     def receive(self, max_length=1024, timeout=READ_TIMEOUT):
         buf = create_string_buffer(max_length)
         rc = _vxi11_receive_timeout(self._clink, buf, max_length, timeout)
         if rc < 0:
-            raise IOError("error receiving from the device: "+str(rc))
-        return buf.value
+            return (rc, None)
+        else:
+            return (rc, buf.value)
 
     def send_data_block(self, cmd, buf):
         if _vxi11_send_data_block(self._clink, cmd.encode(), buf, len(buf)):
@@ -63,22 +62,24 @@ class Vxi11(object):
         buf = create_string_buffer(max_length)
         rc = _vxi11_receive_data_block(self._clink, buf, max_length, timeout)
         if rc < 0:
-            raise IOError("error receiving from the device: "+str(rc))
-        return buf.value
+            return (rc, None)
+        else:
+            return (rc, buf.value)
 
     def send_and_receive(self, cmd, max_length=1024, timeout=READ_TIMEOUT):
         buf = create_string_buffer(max_length)
         c = cmd.encode()
         rc = _vxi11_send_and_receive(self._clink, c_char_p(c), buf, max_length, timeout)
         if rc < 0:
-            raise IOError("error sending/receiving from the device: "+str(rc))
-        return buf.value
+            return (rc, None)
+        else:
+            return (rc, buf.value)
 
-    def obtain_long_value(self, cmd):
-        return _vxi11_obtain_long_value(self._clink, cmd)
+    def obtain_long_value(self, cmd, timeout=READ_TIMEOUT):
+        return _vxi11_obtain_long_value_timeout(self._clink, cmd, timeout)
 
-    def obtain_double_value(self, cmd):
-        return _vxi11_obtain_double_value(self._clink, cmd)
+    def obtain_double_value(self, cmd, timeout=READ_TIMEOUT):
+        return _vxi11_obtain_double_value_timeout(self._clink, cmd, timeout)
 
 
 _libvxi11 = cdll.LoadLibrary("vxi11.dll")
@@ -111,12 +112,12 @@ _vxi11_send_and_receive = _libvxi11.vxi11_send_and_receive
 _vxi11_send_and_receive.argtypes = [c_void_p, c_char_p, c_char_p, c_size_t, c_ulong]
 _vxi11_send_and_receive.restype = c_int
 
-_vxi11_obtain_long_value = _libvxi11.vxi11_obtain_long_value_timeout
-_vxi11_obtain_long_value.argtypes = [c_void_p, c_char_p, c_ulong]
-_vxi11_obtain_long_value.restype = c_long
+_vxi11_obtain_long_value_timeout = _libvxi11.vxi11_obtain_long_value_timeout
+_vxi11_obtain_long_value_timeout.argtypes = [c_void_p, c_char_p, c_ulong]
+_vxi11_obtain_long_value_timeout.restype = c_long
 
-_vxi11_obtain_double_value = _libvxi11.vxi11_obtain_double_value_timeout
-_vxi11_obtain_double_value.argtypes = [c_void_p, c_char_p, c_ulong]
-_vxi11_obtain_double_value.restype = c_double
+_vxi11_obtain_double_value_timeout = _libvxi11.vxi11_obtain_double_value_timeout
+_vxi11_obtain_double_value_timeout.argtypes = [c_void_p, c_char_p, c_ulong]
+_vxi11_obtain_double_value_timeout.restype = c_double
 
 
