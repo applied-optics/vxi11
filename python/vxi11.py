@@ -82,7 +82,7 @@ class Vxi11(object):
         return _vxi11_obtain_double_value_timeout(self._clink, cmd, timeout)
 
 
-_libvxi11 = cdll.LoadLibrary("vxi11.dll")
+_libvxi11 = cdll.LoadLibrary(ctypes.util.find_library("vxi11"))
 
 _vxi11_open_device = _libvxi11.vxi11_open_device
 _vxi11_open_device.argtypes = [POINTER(c_void_p), c_char_p, c_char_p]
