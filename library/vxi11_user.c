@@ -183,7 +183,7 @@ int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device)
 			*clink = NULL;
 			return 1;
 		}
-		ret = _vxi11_open_link(*clink, address, device);
+		ret = _vxi11_open_link(*clink, address, use_device);
 		if (ret != 0) {
 			clnt_destroy((*clink)->client);
 			free(client);
@@ -201,7 +201,7 @@ int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device)
 		/* Copy the client pointer address. Just establish a new link
 		 *  not a new client). Add one to the link count */
 		(*clink)->client = client->client_address;
-		ret = _vxi11_open_link((*clink), address, device);
+		ret = _vxi11_open_link((*clink), address, use_device);
 		client->link_count++;
 	}
 #endif
