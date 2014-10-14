@@ -259,6 +259,7 @@ int vxi11_close_device(VXI11_CLINK * clink, const char *address)
 		}
 	}
 #endif
+	free(clink);
 	return ret;
 }
 
