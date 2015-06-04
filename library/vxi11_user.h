@@ -41,6 +41,7 @@ extern "C" {
 #endif
 
 #include <stdlib.h>
+#include <rpc/rpc.h>
 
 typedef	struct _VXI11_CLINK VXI11_CLINK;
 
@@ -57,10 +58,20 @@ typedef	struct _VXI11_CLINK VXI11_CLINK;
 /* vxi11_send() return value if a sent command times out ON THE INSTRUMENT. */
 #define	VXI11_NULL_WRITE_RESP	51
 
+/* client list stucture */
+struct _vxi11_client_t {
+    struct _vxi11_client_t *next;
+    char address[20];
+#ifndef WIN32
+    CLIENT *client_address;
+#endif
+    int link_count;
+};
+typedef struct _vxi11_client_t vxi11_client_t;
 
 /* The four main functions: open, close, send, receieve (plus a couple of wrappers) */
-vx_EXPORT int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device);
-vx_EXPORT int vxi11_close_device(VXI11_CLINK *clink, const char *address);
+vx_EXPORT int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device, struct _vxi11_client_t **vxi11_clients);
+vx_EXPORT int vxi11_close_device(VXI11_CLINK *clink, const char *address, struct _vxi11_client_t **vxi11_clients);
 vx_EXPORT int vxi11_send(VXI11_CLINK *clink, const char *cmd, size_t len);
 vx_EXPORT int vxi11_send_printf(VXI11_CLINK *clink, const char *format, ...);
 vx_EXPORT ssize_t vxi11_receive(VXI11_CLINK *clink, char *buffer, size_t len);
