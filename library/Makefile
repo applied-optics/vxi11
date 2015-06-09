@@ -2,10 +2,16 @@ include ../config.mk
 
 .PHONY : all install clean dist distclean
 
+UNAME:=$(shell uname -s)
+
+ifneq ($(UNAME),SunOS)
+	LDFLAGS:=$(LDFLAGS) -Wl,--version-script=linker.version
+endif
+
 all : libvxi11.so.0
 
 libvxi11.so.0 : vxi11_user.o vxi11_clnt.o vxi11_xdr.o
-	$(CC) -shared -Wl,-soname,libvxi11.so.0 $^ -o $@
+	$(CC) $(LDFLAGS) -shared -Wl,-soname,libvxi11.so.0 $^ -o $@
 
 vxi11_user.o: vxi11_user.c vxi11.h
 	$(CC) -fPIC $(CFLAGS) -c $< -o $@

@@ -18,7 +18,7 @@ install : all
 dist : distclean
 	mkdir vxi11-$(VERSION)
 	cp -pr library utils vxi11-$(VERSION)/
-	cp -p Makefile CMakeLists.txt CHANGELOG.txt README.md GNU_General_Public_License.txt vxi11-$(VERSION)/
+	cp -p config.mk Makefile CMakeLists.txt CHANGELOG.txt README.md GNU_General_Public_License.txt vxi11-$(VERSION)/
 	tar -zcf vxi11-$(VERSION).tar.gz vxi11-$(VERSION)
 
 distclean : 
