@@ -21,6 +21,6 @@ dist : distclean
 	cp -p config.mk Makefile CMakeLists.txt CHANGELOG.txt README.md GNU_General_Public_License.txt vxi11-$(VERSION)/
 	tar -zcf vxi11-$(VERSION).tar.gz vxi11-$(VERSION)
 
-distclean : 
+distclean :  clean
 	rm -rf vxi11-$(VERSION)
 	rm -f vxi11-$(VERSION).tar.gz
