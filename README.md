@@ -1,9 +1,14 @@
 RPC PROTOCOL FOR COMMUNICATING WITH VXI11-ENABLED DEVICES OVER ETHERNET FROM LINUX
 ==================================================================================
+
 (including instruments such as oscilloscopes, by manufacturers such as
 Agilent and Tektronix, amongst others).
 
 By Steve D. Sharples, June 2006.
+
+
+Background
+----------
 
 This is a collection of source code that will allow you to talk to ethernet-
 enabled instruments that use the VXI11 protocol, from Linux. This includes
@@ -34,51 +39,40 @@ the section on vxi11.x below. This source seems to have literally been written
 from the published VXI11 protocol. I also received from Agilent a simple
 example program that showed you how to use the protocol; working from this 
 and the (open) source that uses the vxi11.x that is included here, I wrote
-vxi11_cmd and the user libraries.
+`vxi11_cmd` and the user libraries.
 
-This collection of source code consists of:
 
-(1) vxi11.x
-This file, vxi11.x, is the amalgamation of vxi11core.rpcl and vxi11intr.rpcl
-which are part of the asynDriver (R4-5) EPICS module, which, at time of
-writing, is available from:
-http://www.aps.anl.gov/epics/modules/soft/asyn/index.html
-More general information about EPICS is available from:
-http://www.aps.anl.gov/epics/
-This code is open source, and is covered under the copyright notice and
-software license agreement shown below, and also at:
-http://www.aps.anl.gov/epics/license/open.php
+Source code
+-----------
 
-It is intended as a lightweight base for the vxi11 rpc protocol. If you
-run rpcgen on this file, it will generate C files and headers, from which
-it is relatively simple to write C programs to communicate with a range
-of ethernet-enabled instruments, such as oscilloscopes and function
-generators by manufacturers such as Agilent and Tektronix (amongst many
-others).
+This package consists of a user library, `libvxi11`, two command line
+utilities, `vxi11_cmd` and `vxi11_send`, and a Python wrapper for libvxi11.
 
-(2) vxi11_user.c (and vxi11_user.h)
-These are (fairly) friendly user libraries. At the core are 4 key functions:
-vxi11_open(), vxi11_close(), vxi11_send() and vxi11_receive(). These allow
-you to talk to your device. There are also some other functions that I
-considered to be generally useful (send_and_receive, functions for sending
-and receiving fixed length data blocks etc) that are all non-instrument-
-specific.
+To compile, run `make`, then and `make install` to install.
 
-(3) vxi11_cmd.c
-This is a fairly simple interactive utility that allows you to send
-commands and queries to your vxi11-enabled instrument, which you
-locate by way of IP address. I recommend you start with *IDN? It shows you
-how the vxi11_user library works
+See `library/vxi11_user.h` for the functions provided by the library.
 
-(4) Makefile
-Type "make" to compile the source above. Type "make clean" to remove
-old object files and ./vxi11_cmd. Type "make install" to copy 
-./vxi11_cmd to /usr/local/bin/
 
-(5) GNU_General_Public_License.txt
+Utilities
+---------
+
+`vxi11_cmd` is a simple interactive utility that allows you to send commands
+and queries to your VXI11 enabled instrument. You will need to consult the
+reference manual for your device to find the appropriate commands. You could
+start by sending `*IDN?`.
+
+`vxi11_send` is a simple interactive utility that allows you to send a single
+command to your VXI11 enabled instrument.
+
+
+License
+-------
+
+library/vxi11.x is covered by its own license, see the file for more details.
+
 Fairly obvious. All programs, source, readme files etc NOT covered by any
 other license (e.g. vxi11.x, which is covered by its own open source 
-license) are covered by this license.
+license) are covered by the GNU GPL version 2 or later.
 
 These programs are free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
