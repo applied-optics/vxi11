@@ -2,9 +2,10 @@
  * symbols are exported.
  */
 
-VXI11_1.12 {
+VXI11_2.0 {
 	global:
 		vxi11_close_device;
+		vxi11_lib_version;
 		vxi11_obtain_double_value;
 		vxi11_obtain_double_value_timeout;
 		vxi11_obtain_long_value;

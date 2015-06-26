@@ -1,4 +1,15 @@
 ------------------------------------------------------------------------------
+vxi11 2.0 - 2015-06-26
+
+* Change to semantic versioning (bumped major number to note this change).
+* Add vxi11_lib_version()
+* Documentation is now in vxi11_user.h
+* Added Python wrapper for shared library.
+* Symbols exported from the library are now restricted.
+* Bump SO version of library, this should be a stable interface now.
+
+
+------------------------------------------------------------------------------
 vxi11_1.11 - 2014-06-12
 
 vxi11_user code is now compiled as a shared library.
