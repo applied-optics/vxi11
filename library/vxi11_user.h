@@ -126,7 +126,7 @@ vx_EXPORT int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *
  * Returns:
  *  0 - on success
  */
-vx_EXPORT int vxi11_close_device(VXI11_CLINK *clink, const char *address);
+vx_EXPORT int vxi11_close_device(VXI11_CLINK *clink, const char *address, struct _vxi11_client_t **vxi11_clients);
 
 
 /* Function: vxi11_send
