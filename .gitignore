@@ -12,3 +12,4 @@ libvxi11.so.0
 vxi11_send
 *.o
 *.pyc
+.pc/

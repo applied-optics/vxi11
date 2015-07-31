@@ -52,30 +52,21 @@ struct _VXI11_CLINK {
 /***************************************************************************** 
  * GENERAL NOTES
  *****************************************************************************
- *
- * There are four functions at the heart of this library:
- *
- * int vxi11_open_device(VXI11_CLINK **clink, const char *address, const char *device)
- * int	vxi11_close_device(VXI11_CLINK *clink, const char *address)
- * int	vxi11_send(VXI11_CLINK *clink, char *cmd, size_t len)
- *    --- or --- (if sending just text)
- * int  vxi11_send_printf(VXI11_CLINK *clink, char *format, ...)
- * ssize_t	vxi11_receive(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout)
- *
- * There are then useful (to me, anyway) more specific functions built on top
- * of these:
- *
- * int	vxi11_send_data_block(VXI11_CLINK *clink, char *cmd, char *buffer, size_t len)
- * ssize_t	vxi11_receive_data_block(VXI11_CLINK *clink, char *buffer, size_t len, unsigned long timeout)
- * int	vxi11_send_and_receive(VXI11_CLINK *clink, char *cmd, char *buf, size_t len, unsigned long timeout)
- * long	vxi11_obtain_long_value(VXI11_CLINK *clink, char *cmd, unsigned long timeout)
- * double vxi11_obtain_double_value(VXI11_CLINK *clink, char *cmd, unsigned long timeout)
- */
 
 /* Internal function declarations. */
 static int _vxi11_open_link(VXI11_CLINK * clink, const char *address,
 			    char *device);
 static int _vxi11_close_link(VXI11_CLINK * clink, const char *address);
+
+
+int vxi11_lib_version(int *major, int *minor, int *revision)
+{
+	if(major) *major = LIBVXI11_MAJOR;
+	if(minor) *minor = LIBVXI11_MINOR;
+	if(revision) *revision = LIBVXI11_REVISION;
+	return LIBVXI11_VERSION_NUMBER;
+}
+
 
 /*****************************************************************************
  * KEY USER FUNCTIONS - USE THESE FROM YOUR PROGRAMS OR INSTRUMENT LIBRARIES *

@@ -1,0 +1,23 @@
+/* Linker version script - currently used here primarily to control which
+ * symbols are exported.
+ */
+
+VXI11_2.0 {
+	global:
+		vxi11_close_device;
+		vxi11_lib_version;
+		vxi11_obtain_double_value;
+		vxi11_obtain_double_value_timeout;
+		vxi11_obtain_long_value;
+		vxi11_obtain_long_value_timeout;
+		vxi11_open_device;
+		vxi11_receive;
+		vxi11_receive_data_block;
+		vxi11_receive_timeout;
+		vxi11_send;
+		vxi11_send_and_receive;
+		vxi11_send_data_block;
+		vxi11_send_printf;
+	local: *;
+};
+
