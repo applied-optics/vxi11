@@ -28,10 +28,6 @@
 
 #include "vxi11_user.h"
 
-#ifdef WIN32
-#define strncasecmp(a, b, c) stricmp(a, b)
-#endif
-
 int main(int argc, char *argv[])
 {
 
