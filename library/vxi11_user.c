@@ -294,9 +294,10 @@ int vxi11_send(VXI11_CLINK * clink, const char *cmd, size_t len)
 	char *send_cmd;
 #endif
 	size_t bytes_left = len;
-	ssize_t write_count;
 
 #ifdef WIN32
+    ViUInt32 write_count = 0;
+
 	send_cmd = (unsigned char *)malloc(len);
 	if (!send_cmd) {
 		return 1;
@@ -390,10 +391,11 @@ ssize_t vxi11_receive(VXI11_CLINK * clink, char *buffer, size_t len)
 ssize_t vxi11_receive_timeout(VXI11_CLINK * clink, char *buffer, size_t len,
 		   unsigned long timeout)
 {
-	size_t curr_pos = 0;
 #ifdef WIN32
+    ViUInt32 curr_pos = 0;
 	viRead(clink->session, (unsigned char *)buffer, len, &curr_pos);
 #else
+    size_t curr_pos = 0;
 	Device_ReadParms read_parms;
 	Device_ReadResp read_resp;
 
