@@ -29,13 +29,8 @@
 #include "vxi11_user.h"
 #define BUF_LEN 100000
 
-#ifdef WIN32
-#define strncasecmp(a, b, c) stricmp(a, b)
-#endif
-
 int main(int argc, char *argv[])
 {
-
 	char *device_ip;
 	char *device_name = NULL;
 	char cmd[256];
