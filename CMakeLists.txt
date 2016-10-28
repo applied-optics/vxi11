@@ -22,12 +22,22 @@ endif (NOT WIN32)
 # ==================================================
 
 set(vxi11_SRCS library/vxi11_user.c library/vxi11_user.h)
+
 if (WIN32)
-	include_directories(C:\\VXIpnp\\WINNT\\include)
-	link_directories(C:\\VXIpnp\\WINNT\\lib\\msc)
+        # Default path for IVI Visa under Windows should be
+        # C:\Program Files (x86)\IVI Foundation\VISA
+        set(ivi_path "C:\\Program Files (x86)\\IVI Foundation\\VISA")
+        include_directories("${ivi_path}\\WinNT\\include")
+        link_directories("${ivi_path}\\WinNT\\lib\\msc")
+
+        # Path for library headers needed by utils
+        include_directories("${vxi11_SOURCE_DIR}\\library")
 else (WIN32)
-	set(vxi11_SRCS ${vxi11_SRCS} library/vxi11.h library/vxi11_clnt.c
-		library/vxi11_xdr.c library/vxi11.x)
+        set(vxi11_SRCS ${vxi11_SRCS}
+                       library/vxi11.h
+                       library/vxi11_clnt.c
+                       library/vxi11_xdr.c
+                       library/vxi11.x)
 endif (WIN32)
 
 
