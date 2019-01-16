@@ -2,7 +2,7 @@
  * symbols are exported.
  */
 
-VXI11_2.0 {
+VXI11_2.1 {
 	global:
 		vxi11_close_device;
 		vxi11_close_device_clients;
