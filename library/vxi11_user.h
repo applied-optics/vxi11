@@ -41,10 +41,11 @@ extern "C" {
 #endif
 
 #include <stdlib.h>
+#include <rpc/rpc.h>
 
 
 #define LIBVXI11_MAJOR 2
-#define LIBVXI11_MINOR 0
+#define LIBVXI11_MINOR 1
 #define LIBVXI11_REVISION 0
 /* LIBVXI11_VERSION_NUMBER looks like 2002001 for e.g. version 2.2.1. */
 #define LIBVXI11_VERSION_NUMBER (LIBVXI11_MAJOR*1000000+LIBVXI11_MINOR*1000+LIBVXI11_REVISION)
@@ -65,6 +66,15 @@ typedef	struct _VXI11_CLINK VXI11_CLINK;
 /* vxi11_send() return value if a sent command times out ON THE INSTRUMENT. */
 #define	VXI11_NULL_WRITE_RESP	51
 
+/* client list stucture */
+typedef struct _vxi11_client_t {
+    struct _vxi11_client_t *next;
+    char address[20];
+#ifndef WIN32
+    CLIENT *client_address;
+#endif
+    int link_count;
+} vxi11_client_t;
 
 /* Function: vxi11_library_version
  *
@@ -105,6 +115,27 @@ vx_EXPORT int vxi11_lib_version(int *major, int *minor, int *revision);
 vx_EXPORT int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device);
 
 
+/* Function: vxi11_open_device_clients
+ *
+ * Open a connection to an instrument.
+ *
+ * Parameters:
+ *  clink   - pointer to a VXI11_CLINK pointer, will be initialised on a
+ *            successful connection.
+ *  address - the IP address or (where supported) USB address for the
+ *            instrument to connect to.
+ *  device   - some instruments have multiple interfaces, this allows you to
+ *            specify which to connect to. Set to NULL to use the default of
+ *            "inst0".
+ *  clients  - pointer to a vxi11_clients structure
+ *
+ * Returns:
+ *  0 - on success
+ *  1 - on failure. clink will not be a valid pointer.
+ */
+vx_EXPORT int vxi11_open_device_clients(VXI11_CLINK **clink, const char *address, char *device, vxi11_client_t **clients);
+
+
 /* Function: vxi11_close_device
  *
  * Parameters:
@@ -116,6 +147,20 @@ vx_EXPORT int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *
  *  0 - on success
  */
 vx_EXPORT int vxi11_close_device(VXI11_CLINK *clink, const char *address);
+
+
+/* Function: vxi11_close_device_clients
+ *
+ * Parameters:
+ *  clink   - a valid VXI11_CLINK pointer.
+ *  address - the IP address or (where supported) USB address for the
+ *            instrument.
+ *  clients  - pointer to a vxi11_clients structure
+ *
+ * Returns:
+ *  0 - on success
+ */
+vx_EXPORT int vxi11_close_device_clients(VXI11_CLINK *clink, const char *address, vxi11_client_t **clients);
 
 
 /* Function: vxi11_send

@@ -1,4 +1,6 @@
 build/
+build-static/
+build-shared/
 vxi11.h
 vxi11_cmd
 vxi11_clnt.c
@@ -8,7 +10,9 @@ TAGS
 vxi11_test.cc
 vxi11_test.cc
 docs
-libvxi11.so.0
+libvxi11.a
+libvxi11.so
+libvxi11.so.*
 vxi11_send
 *.o
 *.pyc

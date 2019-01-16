@@ -63,16 +63,7 @@ struct _VXI11_CLINK {
  *   with the same address or not
  */
 
-struct _vxi11_client_t {
-	struct _vxi11_client_t *next;
-	char address[20];
-#ifndef WIN32
-	CLIENT *client_address;
-#endif
-	int link_count;
-};
-
-static struct _vxi11_client_t *VXI11_CLIENTS = NULL;
+static vxi11_client_t *VXI11_CLIENTS = NULL;
 
 /* Internal function declarations. */
 static int _vxi11_open_link(VXI11_CLINK * clink, const char *address,
@@ -100,12 +91,17 @@ int vxi11_lib_version(int *major, int *minor, int *revision)
  * used multiple times for the same device (the library will keep track).*/
 int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device)
 {
+    return vxi11_open_device_clients(clink, address, device, &VXI11_CLIENTS);
+}
+
+int vxi11_open_device_clients(VXI11_CLINK **clink, const char *address, char *device, vxi11_client_t **clients)
+{
 #ifdef WIN32
 	ViStatus status;
 	char buf[256];
 #else
 	int ret;
-	struct _vxi11_client_t *tail, *client = NULL;
+	vxi11_client_t *tail, *client = NULL;
 #endif
 	char default_device[6] = "inst0";
 	char *use_device;
@@ -141,7 +137,7 @@ int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device)
 #else
 	/* Have a look to see if we've already initialised an instrument with
 	 * this address */
-	tail = VXI11_CLIENTS;
+	tail = *clients;
 	while (tail) {
 		if (strcmp(address, tail->address) == 0) {
 			client = tail;
@@ -156,7 +152,7 @@ int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device)
 		 * is, for this address. Because it's a new client, this
 		 * must be link number 1. Keep track of how many devices we've
 		 * opened so we don't run out of storage space. */
-		client = (struct _vxi11_client_t *)calloc(1, sizeof(struct _vxi11_client_t));
+		client = (vxi11_client_t *)calloc(1, sizeof(vxi11_client_t));
 		if (!client) {
 			free(*clink);
 			*clink = NULL;
@@ -186,8 +182,8 @@ int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device)
 		strncpy(client->address, address, 20);
 		client->client_address = (*clink)->client;
 		client->link_count = 1;
-		client->next = VXI11_CLIENTS;
-		VXI11_CLIENTS = client;
+		client->next = *clients;
+		*clients = client;
 	} else {
 		/* Copy the client pointer address. Just establish a new link
 		 *  not a new client). Add one to the link count */
@@ -206,15 +202,20 @@ int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device)
  * be used multiple times for the same device (the library will keep track).*/
 int vxi11_close_device(VXI11_CLINK * clink, const char *address)
 {
+    return vxi11_close_device_clients(clink, address, &VXI11_CLIENTS);
+}
+
+int vxi11_close_device_clients(VXI11_CLINK * clink, const char *address, vxi11_client_t **clients)
+{
 	int ret = 0;
 #ifdef WIN32
 	viClose(clink->session);
 	viClose(clink->rm);
 #else
-	struct _vxi11_client_t *tail, *last = NULL, *client = NULL;
+	vxi11_client_t *tail, *last = NULL, *client = NULL;
 
 	/* Which instrument are we referring to? */
-	tail = VXI11_CLIENTS;
+	tail = *clients;
 	while (tail) {
 		if (strncmp(address, tail->address, 20) == 0) {
 			client = tail;
@@ -245,7 +246,7 @@ int vxi11_close_device(VXI11_CLINK * clink, const char *address)
 			if (last) {
 				last->next = client->next;
 			} else {
-				VXI11_CLIENTS = client->next;
+				*clients = client->next;
 			}
 		}
 	}
