@@ -36,5 +36,5 @@ install: all
 	$(INSTALL) libvxi11.so.${SOVERSION} $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/
 	ln -sf libvxi11.so.${SOVERSION} $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/libvxi11.so
 	$(INSTALL) -d $(DESTDIR)$(prefix)/include/
-	$(INSTALL) vxi11_user.h $(DESTDIR)$(prefix)/include/
+	$(INSTALL) -m644 vxi11_user.h $(DESTDIR)$(prefix)/include/
 
