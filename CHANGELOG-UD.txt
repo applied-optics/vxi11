@@ -12,3 +12,5 @@ are documented separately.
   which is wrong for the header file
 * Fix potentially non-terminated string in _vxi11_client_t list which
   has a fixed-size buffer for a file name
+* Handle fgets failure (e.g., on EOF) in vxi11_cmd. Actually return
+  the error
