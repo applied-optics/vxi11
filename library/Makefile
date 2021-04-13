@@ -8,7 +8,7 @@ ifneq ($(UNAME),SunOS)
 	LDFLAGS:=$(LDFLAGS) -Wl,--version-script=linker.version
 endif
 
-lib = lib
+lib = $(shell $(CC) -print-search-dirs|grep '^libraries'|tr ':' '\n'|sed -n 's|.*/\([^/]\+\)/\?$$|\1|p'|grep -m1 'lib\(64\|32\|x32\)')
 
 all : libvxi11.so.${SOVERSION}
 

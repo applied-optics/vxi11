@@ -20,3 +20,4 @@ are documented separately.
 * Install python code as well
 * Add .spec file for Fedora
 * Simplify library directory name handling
+* Automatically determine correct lib directory name
