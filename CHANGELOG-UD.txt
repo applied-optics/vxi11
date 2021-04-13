@@ -14,3 +14,6 @@ are documented separately.
   has a fixed-size buffer for a file name
 * Handle fgets failure (e.g., on EOF) in vxi11_cmd. Actually return
   the error
+* Simplify argument handling in vxi11_send and in the process fix
+  unnecessary truncation of the command and potential out-of-bounds
+  read

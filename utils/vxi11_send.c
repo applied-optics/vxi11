@@ -35,11 +35,11 @@
 int main(int argc, char *argv[])
 {
 
-	static char *device_ip;
-	char cmd[256];
+	char *device_ip;
+	char *cmd;
 	VXI11_CLINK *clink;
 
-	if (argc < 2) {
+	if (argc < 3) {
 		printf("usage: %s your.inst.ip.addr command\n", argv[0]);
 		exit(1);
 	}
@@ -51,8 +51,7 @@ int main(int argc, char *argv[])
 		exit(2);
 	}
 
-	memset(cmd, 0, 256);	// initialize command string
-	strncpy(cmd, argv[2], 256);
+	cmd = argv[2];
 	vxi11_send(clink, cmd, strlen(cmd));
 	vxi11_close_device(clink, device_ip);
 	return 0;
