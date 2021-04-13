@@ -64,7 +64,7 @@ cd ..
 rm -rf ${RPM_BUILD_ROOT}
 mkdir -p ${RPM_BUILD_ROOT}%{_prefix}
 
-%make_install prefix=%{_prefix} LIB_SUFFIX=$(echo %{_lib}|sed 's/lib//')
+%make_install prefix=%{_prefix} lib=%{_lib}
 
 cd python
 %py3_install
