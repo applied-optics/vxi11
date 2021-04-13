@@ -17,3 +17,4 @@ are documented separately.
 * Simplify argument handling in vxi11_send and in the process fix
   unnecessary truncation of the command and potential out-of-bounds
   read
+* Install python code as well
