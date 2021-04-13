@@ -1,0 +1,23 @@
+ 
+Post vxi11 2.0 - 2021-04-13
+---------------------------
+These are the changes made on a clone of the official repository.  An
+appropriate pull request will be made but for the time being the changes
+are documented separately.
+
+* Use tiRPC and link with appropriate libraries.  This is needed for
+  modern Linux systems because the old SunRPC code is only available
+  for compatibility
+* Fix use of install which installs with execute permission by default
+  which is wrong for the header file
+* Fix potentially non-terminated string in _vxi11_client_t list which
+  has a fixed-size buffer for a file name
+* Handle fgets failure (e.g., on EOF) in vxi11_cmd. Actually return
+  the error
+* Simplify argument handling in vxi11_send and in the process fix
+  unnecessary truncation of the command and potential out-of-bounds
+  read
+* Install python code as well
+* Add .spec file for Fedora
+* Simplify library directory name handling
+* Automatically determine correct lib directory name

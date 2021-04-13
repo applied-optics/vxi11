@@ -63,7 +63,8 @@ int main(int argc, char *argv[])
 		memset(cmd, 0, 256);	// initialize command string
 		memset(buf, 0, BUF_LEN);	// initialize buffer
 		printf("Input command or query ('q' to exit): ");
-		fgets(cmd, 256, stdin);
+		if (fgets(cmd, 256, stdin) == NULL)
+		  break;
 		cmd[strlen(cmd) - 1] = 0;	// just gets rid of the \n
 		if (strncasecmp(cmd, "q", 1) == 0) {
 			break;
@@ -85,5 +86,5 @@ int main(int argc, char *argv[])
 	}
 
 	ret = vxi11_close_device(clink, device_ip);
-	return 0;
+	return ret;
 }

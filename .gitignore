@@ -13,3 +13,4 @@ vxi11_send
 *.o
 *.pyc
 .pc/
+vxi11-*.tar.gz

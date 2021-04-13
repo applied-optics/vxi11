@@ -8,10 +8,12 @@ ifneq ($(UNAME),SunOS)
 	LDFLAGS:=$(LDFLAGS) -Wl,--version-script=linker.version
 endif
 
+lib = $(shell $(CC) -print-search-dirs|grep '^libraries'|tr ':' '\n'|sed -n 's|.*/\([^/]\+\)/\?$$|\1|p'|grep -m1 'lib\(64\|32\|x32\)')
+
 all : libvxi11.so.${SOVERSION}
 
 libvxi11.so.${SOVERSION} : vxi11_user.o vxi11_clnt.o vxi11_xdr.o
-	$(CC) $(LDFLAGS) -shared -Wl,-soname,libvxi11.so.${SOVERSION} $^ -o $@
+	$(CC) $(LDFLAGS) -shared -Wl,-soname,libvxi11.so.${SOVERSION} $^ -o $@ $(shell pkg-config --libs libtirpc)
 
 vxi11_user.o: vxi11_user.c vxi11.h
 	$(CC) -fPIC $(CFLAGS) -c $< -o $@
@@ -32,9 +34,9 @@ clean:
 	rm -f *.o libvxi11.so.${SOVERSION} vxi11.h vxi11_svc.c vxi11_xdr.c vxi11_clnt.c TAGS
 
 install: all
-	$(INSTALL) -d $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/
-	$(INSTALL) libvxi11.so.${SOVERSION} $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/
-	ln -sf libvxi11.so.${SOVERSION} $(DESTDIR)$(prefix)/lib${LIB_SUFFIX}/libvxi11.so
+	$(INSTALL) -d $(DESTDIR)$(prefix)/${lib}/
+	$(INSTALL) libvxi11.so.${SOVERSION} $(DESTDIR)$(prefix)/${lib}/
+	ln -sf libvxi11.so.${SOVERSION} $(DESTDIR)$(prefix)/${lib}/libvxi11.so
 	$(INSTALL) -d $(DESTDIR)$(prefix)/include/
-	$(INSTALL) vxi11_user.h $(DESTDIR)$(prefix)/include/
+	$(INSTALL) -m644 vxi11_user.h $(DESTDIR)$(prefix)/include/
 
