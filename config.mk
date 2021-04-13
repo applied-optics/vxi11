@@ -1,4 +1,4 @@
-CFLAGS=-g
+CFLAGS=$(OPTS) $(shell pkg-config --cflags libtirpc)
 LDFLAGS=
 
 INSTALL=install

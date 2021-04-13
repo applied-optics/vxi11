@@ -11,7 +11,7 @@ endif
 all : libvxi11.so.${SOVERSION}
 
 libvxi11.so.${SOVERSION} : vxi11_user.o vxi11_clnt.o vxi11_xdr.o
-	$(CC) $(LDFLAGS) -shared -Wl,-soname,libvxi11.so.${SOVERSION} $^ -o $@
+	$(CC) $(LDFLAGS) -shared -Wl,-soname,libvxi11.so.${SOVERSION} $^ -o $@ $(shell pkg-config --libs libtirpc)
 
 vxi11_user.o: vxi11_user.c vxi11.h
 	$(CC) -fPIC $(CFLAGS) -c $< -o $@
