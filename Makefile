@@ -1,4 +1,4 @@
-VERSION=2.0
+VERSION=2.0ud.1
 
 include config.mk
 
@@ -20,7 +20,7 @@ dist : distclean
 	cp -pr library utils vxi11-$(VERSION)/
 	mkdir vxi11-$(VERSION)/python
 	cp python/setup.py python/vxi11.py vxi11-$(VERSION)/python
-	cp -p config.mk Makefile CMakeLists.txt CHANGELOG.txt README.md GNU_General_Public_License.txt vxi11-$(VERSION)/
+	cp -p config.mk Makefile CMakeLists.txt CHANGELOG.txt README.md GNU_General_Public_License.txt vxi11.spec vxi11-$(VERSION)/
 	tar -zcf vxi11-$(VERSION).tar.gz vxi11-$(VERSION)
 
 distclean :  clean
