@@ -65,11 +65,11 @@ struct _VXI11_CLINK {
 
 struct _vxi11_client_t {
 	struct _vxi11_client_t *next;
-	char address[20];
 #ifndef WIN32
 	CLIENT *client_address;
 #endif
 	int link_count;
+	char address[0];
 };
 
 static struct _vxi11_client_t *VXI11_CLIENTS = NULL;
@@ -156,7 +156,7 @@ int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device)
 		 * is, for this address. Because it's a new client, this
 		 * must be link number 1. Keep track of how many devices we've
 		 * opened so we don't run out of storage space. */
-		client = (struct _vxi11_client_t *)calloc(1, sizeof(struct _vxi11_client_t));
+		client = (struct _vxi11_client_t *)calloc(1, sizeof(struct _vxi11_client_t) + strlen(address) + 1);
 		if (!client) {
 			free(*clink);
 			*clink = NULL;
@@ -183,7 +183,7 @@ int vxi11_open_device(VXI11_CLINK **clink, const char *address, char *device)
 			return 1;
 		}
 
-		strncpy(client->address, address, 20);
+		strcpy(client->address, address);
 		client->client_address = (*clink)->client;
 		client->link_count = 1;
 		client->next = VXI11_CLIENTS;
