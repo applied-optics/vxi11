@@ -6,7 +6,7 @@ CFLAGS:=${CFLAGS} -I../library
 
 all : vxi11_cmd vxi11_send vxi11_scdp
 
-vxi11_scdp: vxi11_scdp.o ../library/libvxi11.so.0
+vxi11_scdp: vxi11_scdp.o ../library/libvxi11.so.${SOVERSION}
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 vxi11_cmd: vxi11_cmd.o ../library/libvxi11.so.${SOVERSION}
