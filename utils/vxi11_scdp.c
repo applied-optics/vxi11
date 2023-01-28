@@ -23,6 +23,7 @@
  * The author's email address is steve.sharples@nottingham.ac.uk
  */
 
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -80,7 +81,7 @@ int main(int argc, char *argv[])
 	if (bytes_returned > 0) {
 	    int f;
 	    printf("%ld bytes received ", bytes_returned);
-	    f = open(filename, O_CREAT|O_TRUNC|O_RDWR);
+	    f = open(filename, O_CREAT|O_TRUNC|O_RDWR, 0644);
 	    if (bytes_returned == write(f, buf, bytes_returned) && (err = close(f)) == 0)
 		printf("and saved in %s", filename);
 	    else {
